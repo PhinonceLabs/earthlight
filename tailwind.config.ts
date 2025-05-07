@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,26 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Custom colors for the lighting app
+				lumify: {
+					blue: {
+						light: '#E5DEFF', 
+						DEFAULT: '#9b87f5',
+						dark: '#7E69AB'
+					},
+					amber: {
+						light: '#FEF7CD',
+						DEFAULT: '#F9D262',
+						dark: '#E5A013'
+					},
+					neutral: {
+						lighter: '#F6F6F7',
+						light: '#C8C8C9', 
+						DEFAULT: '#8E9196',
+						dark: '#403E43',
+						darker: '#221F26'
+					}
 				}
 			},
 			borderRadius: {
@@ -84,11 +105,16 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse-gentle': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.7' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-gentle': 'pulse-gentle 3s ease-in-out infinite'
 			}
 		}
 	},
