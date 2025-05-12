@@ -1,7 +1,9 @@
 
 import React, { useMemo } from 'react';
-import { TimeIntensityPair, kelvinToHex, getColorTemperatureName } from '../utils/lightingStandards';
+import { TimeIntensityPair, kelvinToHex, getColorTemperatureName, getMelanopicRatioDescription, calculateSpectralContent, SpectralRatio } from '../utils/lightingStandards';
 import { getCurrentLightSettings } from '../utils/scheduleGenerator';
+import { ChartContainer } from "@/components/ui/chart";
+import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend, BarChart, Bar } from 'recharts';
 
 interface ScheduleVisualizerProps {
   schedule: TimeIntensityPair[];
@@ -35,6 +37,23 @@ const ScheduleVisualizer: React.FC<ScheduleVisualizerProps> = ({
   
   // Current position indicator
   const currentPosition = (currentHour / 24) * 100;
+  
+  // Get the spectral data for the current settings
+  const spectralData = useMemo(() => {
+    // Use existing spectral data if available, or calculate based on temperature
+    return currentSettings.spectralRatio || calculateSpectralContent(currentSettings.temperature);
+  }, [currentSettings]);
+
+  // Prepare data for the spectral chart
+  const spectralChartData = [
+    { name: 'Blue', value: spectralData.blueLight, fill: '#5b8af7' },
+    { name: 'Green', value: spectralData.greenLight, fill: '#4cd964' },
+    { name: 'Red', value: spectralData.redLight, fill: '#ff3b30' }
+  ];
+  
+  // Prepare melanopic impact data
+  const melanopicImpact = spectralData.melanopicRatio || 0;
+  const melanopicDesc = getMelanopicRatioDescription(melanopicImpact);
   
   return (
     <div className="w-full bg-white rounded-xl shadow-md p-6">
@@ -102,7 +121,7 @@ const ScheduleVisualizer: React.FC<ScheduleVisualizerProps> = ({
         </div>
       </div>
       
-      <div className="grid grid-cols-2 gap-4 text-sm">
+      <div className="grid grid-cols-2 gap-4 text-sm mb-6">
         <div className="p-3 bg-gray-50 rounded-lg">
           <div className="text-gray-500">Current Light Intensity</div>
           <div className="text-2xl font-semibold mt-1">{currentSettings.intensity}%</div>
@@ -118,6 +137,53 @@ const ScheduleVisualizer: React.FC<ScheduleVisualizerProps> = ({
             <span className="text-2xl font-semibold">{currentSettings.temperature}K</span>
           </div>
           <div className="text-xs text-gray-500 mt-1">({getColorTemperatureName(currentSettings.temperature)})</div>
+        </div>
+      </div>
+      
+      {/* Spectral Content Section */}
+      <div className="bg-gray-50 rounded-lg p-4 mb-4">
+        <h4 className="text-sm font-medium text-gray-700 mb-3">Spectral Content Analysis</h4>
+        
+        <div className="h-44">
+          <ChartContainer 
+            config={{
+              blue: { label: "Blue Light", color: "#5b8af7" },
+              green: { label: "Green Light", color: "#4cd964" },
+              red: { label: "Red Light", color: "#ff3b30" },
+            }}
+          >
+            <BarChart data={spectralChartData}>
+              <XAxis dataKey="name" />
+              <YAxis domain={[0, 100]} />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="value" name="Percentage" />
+            </BarChart>
+          </ChartContainer>
+        </div>
+        
+        <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+          <div className="text-sm font-medium text-gray-700">Melanopic Impact</div>
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <div className="h-2 w-full bg-gray-200 rounded-full mt-2">
+                <div 
+                  className="h-full bg-blue-500 rounded-full"
+                  style={{ width: `${Math.min(melanopicImpact * 100 / 1.5, 100)}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>Low</span>
+                <span>Medium</span>
+                <span>High</span>
+              </div>
+            </div>
+            <div className="ml-4">
+              <span className="text-xl font-semibold">{melanopicImpact.toFixed(2)}</span>
+              <span className="text-sm text-gray-500 ml-1">M/P ratio</span>
+            </div>
+          </div>
+          <p className="text-xs text-gray-600 mt-2">{melanopicDesc}</p>
         </div>
       </div>
     </div>
