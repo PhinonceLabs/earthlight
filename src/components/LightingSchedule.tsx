@@ -3,12 +3,12 @@ import React, { useState, useEffect } from 'react';
 import ScheduleVisualizer from './ScheduleVisualizer';
 import CustomizationPanel from './CustomizationPanel';
 import ResearchInfo from './ResearchInfo';
-import { standardSchedules, getMelanopicRatioDescription } from '../utils/lightingStandards';
+import { standardSchedules } from '../utils/lightingStandards';
 import { getCurrentLightSettings, getUserTimezone } from '../utils/scheduleGenerator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Sun, Moon, Clock, Info, Globe, ThermometerSun } from "lucide-react";
+import { Sun, Moon, Clock, Info, Globe } from "lucide-react";
 
 const LightingSchedule: React.FC = () => {
   const [currentScheduleIndex, setCurrentScheduleIndex] = useState(0);
@@ -41,10 +41,6 @@ const LightingSchedule: React.FC = () => {
   
   // Check if this is a sun-adjusted schedule
   const hasSunAdjustment = activeSchedule.description?.includes('Adjusted for');
-
-  // Get melanopic ratio description if available
-  const melanopicRatio = currentSettings.spectralRatio?.melanopicRatio;
-  const melanopicDescription = getMelanopicRatioDescription(melanopicRatio);
 
   return <div className="w-full max-w-7xl mx-auto">
       <div className="mb-8">
@@ -81,7 +77,7 @@ const LightingSchedule: React.FC = () => {
           </CardHeader>
           
           <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="p-4 border rounded-lg flex items-center bg-gradient-to-r from-amber-50 to-amber-100">
                 <div className="p-3 rounded-full bg-amber-200 mr-4">
                   <Sun className="h-6 w-6 text-amber-600" />
@@ -104,19 +100,7 @@ const LightingSchedule: React.FC = () => {
               
               <div className="p-4 border rounded-lg flex items-center bg-gradient-to-r from-purple-50 to-purple-100">
                 <div className="p-3 rounded-full bg-purple-200 mr-4">
-                  <ThermometerSun className="h-6 w-6 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Melanopic Ratio</p>
-                  <h3 className="text-xl font-bold truncate">
-                    {currentSettings.spectralRatio?.melanopicRatio?.toFixed(2) || "N/A"}
-                  </h3>
-                </div>
-              </div>
-              
-              <div className="p-4 border rounded-lg flex items-center bg-gradient-to-r from-green-50 to-green-100">
-                <div className="p-3 rounded-full bg-green-200 mr-4">
-                  <Clock className="h-6 w-6 text-green-600" />
+                  <Clock className="h-6 w-6 text-purple-600" />
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Schedule Name</p>
@@ -125,18 +109,9 @@ const LightingSchedule: React.FC = () => {
               </div>
             </div>
             
-            {melanopicRatio && (
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm flex items-center">
-                <Sun className="h-4 w-4 mr-2 text-amber-500" />
-                <span className="text-blue-700">
-                  {melanopicDescription} - The current light has a {melanopicRatio.toFixed(2)} melanopic to photopic ratio.
-                </span>
-              </div>
-            )}
-            
             {hasSunAdjustment && (
-              <div className="mt-2 p-3 bg-blue-50 rounded-lg text-sm text-blue-700 flex items-center">
-                <Globe className="h-4 w-4 mr-2 text-amber-500" />
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-700 flex items-center">
+                <Sun className="h-4 w-4 mr-2 text-amber-500" />
                 <span>This schedule is optimized based on your location's sunrise and sunset times.</span>
               </div>
             )}
