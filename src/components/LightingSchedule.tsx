@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import ScheduleVisualizer from './ScheduleVisualizer';
 import CustomizationPanel from './CustomizationPanel';
@@ -9,43 +8,36 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Sun, Moon, Clock, Info } from "lucide-react";
-
 const LightingSchedule: React.FC = () => {
   const [currentScheduleIndex, setCurrentScheduleIndex] = useState(0);
   const [activeSchedule, setActiveSchedule] = useState(standardSchedules[0]);
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
-  
+
   // Update current time every minute
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000);
-    
     return () => clearInterval(timer);
   }, []);
-  
+
   // Handle preset schedule change
   const handleScheduleChange = (scheduleIndex: number) => {
     setCurrentScheduleIndex(scheduleIndex);
     setActiveSchedule(standardSchedules[scheduleIndex]);
   };
-  
+
   // Handle custom schedule change
   const handleCustomScheduleChange = (customSchedule: any) => {
     setActiveSchedule(customSchedule);
     setCurrentScheduleIndex(-1); // -1 indicates custom
   };
-  
+
   // Get current lighting recommendation
-  const currentSettings = getCurrentLightSettings(
-    activeSchedule.schedule,
-    currentTime.getHours() + currentTime.getMinutes() / 60
-  );
-  
-  return (
-    <div className="w-full max-w-7xl mx-auto">
+  const currentSettings = getCurrentLightSettings(activeSchedule.schedule, currentTime.getHours() + currentTime.getMinutes() / 60);
+  return <div className="w-full max-w-7xl mx-auto">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold tracking-tight text-gray-900 mb-1">Lumify Lighting Scheduler</h2>
+        <h2 className="text-3xl font-bold tracking-tight text-gray-900 mb-1">Earthlight Scheduler</h2>
         <p className="text-lg text-gray-600">Research-based lighting recommendations for optimal human health.</p>
       </div>
       
@@ -60,7 +52,10 @@ const LightingSchedule: React.FC = () => {
                 </CardDescription>
               </div>
               <Badge variant="secondary" className="bg-white text-lumify-blue-dark">
-                {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {currentTime.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
               </Badge>
             </div>
           </CardHeader>
@@ -118,19 +113,13 @@ const LightingSchedule: React.FC = () => {
         </TabsList>
         
         <TabsContent value="customize">
-          <CustomizationPanel 
-            onScheduleChange={handleScheduleChange}
-            onCustomScheduleChange={handleCustomScheduleChange}
-            currentScheduleIndex={currentScheduleIndex}
-          />
+          <CustomizationPanel onScheduleChange={handleScheduleChange} onCustomScheduleChange={handleCustomScheduleChange} currentScheduleIndex={currentScheduleIndex} />
         </TabsContent>
         
         <TabsContent value="research">
           <ResearchInfo currentSchedule={activeSchedule} />
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    </div>;
 };
-
 export default LightingSchedule;
