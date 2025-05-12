@@ -1,12 +1,22 @@
 
 import { TimeIntensityPair, standardSchedules, LightingSchedule } from './lightingStandards';
+import { format, addMinutes, parse } from 'date-fns';
+
+// Interface for sunrise/sunset data
+export interface SunTimesData {
+  sunrise: Date;
+  sunset: Date;
+  timezone: string;
+  location: string;
+}
 
 // Helper function to create a custom schedule based on wake and sleep times
 export const generateCustomSchedule = (
   wakeTime: number,  // 0-24 hour
   sleepTime: number, // 0-24 hour
   maxIntensity: number = 100,
-  baseSchedule: string = "Optimal Office Lighting"
+  baseSchedule: string = "Optimal Office Lighting",
+  sunTimes?: SunTimesData // Optional sunrise/sunset data
 ): TimeIntensityPair[] => {
   // Get the base schedule to modify
   const baseScheduleData = standardSchedules.find(s => s.name === baseSchedule) || standardSchedules[0];
@@ -15,13 +25,32 @@ export const generateCustomSchedule = (
   const defaultWake = 6;
   const defaultSleep = 22;
   
+  // Adjust wake and sleep times based on sunrise and sunset if provided
+  let adjustedWakeTime = wakeTime;
+  let adjustedSleepTime = sleepTime;
+  
+  if (sunTimes) {
+    const sunriseHour = sunTimes.sunrise.getHours() + (sunTimes.sunrise.getMinutes() / 60);
+    const sunsetHour = sunTimes.sunset.getHours() + (sunTimes.sunset.getMinutes() / 60);
+    
+    // Optional: Adjust wake time to not be earlier than 30 minutes before sunrise
+    if (adjustedWakeTime < sunriseHour - 0.5) {
+      adjustedWakeTime = Math.max(adjustedWakeTime, sunriseHour - 0.5);
+    }
+    
+    // Optional: Adjust sleep time to not be earlier than sunset
+    if (adjustedSleepTime < sunsetHour + 1) {
+      adjustedSleepTime = Math.max(adjustedSleepTime, sunsetHour + 1);
+    }
+  }
+  
   const customSchedule: TimeIntensityPair[] = [];
   
   // Add midnight starting point
   customSchedule.push({ time: 0, intensity: 5, temperature: 2200 });
   
   // Adjust schedule based on wake time difference
-  const wakeDiff = wakeTime - defaultWake;
+  const wakeDiff = adjustedWakeTime - defaultWake;
   
   // Find the base schedule points that occur during active hours
   const activeHoursPoints = baseScheduleData.schedule.filter(
@@ -31,13 +60,13 @@ export const generateCustomSchedule = (
   // Scale the active hours to fit the user's wake/sleep cycle
   if (activeHoursPoints.length > 0) {
     const activeHoursDuration = defaultSleep - defaultWake;
-    const userActiveHoursDuration = sleepTime - wakeTime;
+    const userActiveHoursDuration = adjustedSleepTime - adjustedWakeTime;
     
     // Create points for the user's active hours
     activeHoursPoints.forEach(basePoint => {
       // Calculate the relative position in the active period
       const relativePosition = (basePoint.time - defaultWake) / activeHoursDuration;
-      const newTime = wakeTime + (relativePosition * userActiveHoursDuration);
+      const newTime = adjustedWakeTime + (relativePosition * userActiveHoursDuration);
       const roundedTime = Math.round(newTime * 2) / 2; // Round to nearest half hour
       
       // Scale intensity if needed
@@ -51,9 +80,50 @@ export const generateCustomSchedule = (
     });
   }
   
+  // If we have sunrise/sunset data, add special points for those times
+  if (sunTimes) {
+    const sunriseHour = sunTimes.sunrise.getHours() + (sunTimes.sunrise.getMinutes() / 60);
+    const sunsetHour = sunTimes.sunset.getHours() + (sunTimes.sunset.getMinutes() / 60);
+    
+    // Add a point for sunrise with higher color temperature (more blue light)
+    customSchedule.push({
+      time: sunriseHour,
+      intensity: 85,
+      temperature: 5500 // Cooler light at sunrise
+    });
+    
+    // Add a point for 1 hour after sunrise with max brightness
+    customSchedule.push({
+      time: Math.min(sunriseHour + 1, 12),
+      intensity: maxIntensity,
+      temperature: 6500 // Highest blue light content
+    });
+    
+    // Add a point for 1 hour before sunset
+    customSchedule.push({
+      time: Math.max(sunsetHour - 1, 16),
+      intensity: 80,
+      temperature: 4200 // Beginning to warm
+    });
+    
+    // Add a point for sunset with warmer light
+    customSchedule.push({
+      time: sunsetHour,
+      intensity: 60,
+      temperature: 3500 // Warmer light at sunset
+    });
+    
+    // Add a point for 1 hour after sunset with even warmer light
+    customSchedule.push({
+      time: sunsetHour + 1,
+      intensity: 30,
+      temperature: 2700 // Very warm light after sunset
+    });
+  }
+  
   // Add sleep time and overnight points
   customSchedule.push({ 
-    time: sleepTime, 
+    time: adjustedSleepTime, 
     intensity: 10, 
     temperature: 2200 
   });
@@ -140,3 +210,87 @@ export const createNamedSchedule = (
     ]
   };
 };
+
+// Get sunrise and sunset times for a location using free API
+export const fetchSunTimes = async (
+  latitude: number,
+  longitude: number,
+  timezone: string = Intl.DateTimeFormat().resolvedOptions().timeZone,
+  date: Date = new Date()
+): Promise<SunTimesData | null> => {
+  try {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    // Using free sunrise-sunset.org API
+    const response = await fetch(
+      `https://api.sunrise-sunset.org/json?lat=${latitude}&lng=${longitude}&date=${dateStr}&formatted=0`
+    );
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch sunrise/sunset data');
+    }
+    
+    const data = await response.json();
+    
+    if (data.status !== 'OK') {
+      throw new Error('Invalid sunrise/sunset data received');
+    }
+    
+    // Parse the UTC times and convert to local time zone
+    const sunriseUTC = new Date(data.results.sunrise);
+    const sunsetUTC = new Date(data.results.sunset);
+    
+    // Adjust for timezone
+    const sunriseTZ = new Date(
+      sunriseUTC.toLocaleString('en-US', { timeZone: timezone })
+    );
+    
+    const sunsetTZ = new Date(
+      sunsetUTC.toLocaleString('en-US', { timeZone: timezone })
+    );
+    
+    return {
+      sunrise: sunriseTZ,
+      sunset: sunsetTZ,
+      timezone,
+      location: `${latitude.toFixed(2)},${longitude.toFixed(2)}`
+    };
+  } catch (error) {
+    console.error('Error fetching sun times:', error);
+    return null;
+  }
+};
+
+// Format the time for display
+export const formatTime = (hour: number): string => {
+  const h = Math.floor(hour);
+  const m = Math.round((hour - h) * 60);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const displayHour = h % 12 === 0 ? 12 : h % 12;
+  return `${displayHour}:${m.toString().padStart(2, '0')} ${period}`;
+};
+
+// Convert time string to decimal hours
+export const timeStringToDecimal = (timeStr: string): number => {
+  const [time, period] = timeStr.split(' ');
+  const [hourStr, minuteStr] = time.split(':');
+  
+  let hour = parseInt(hourStr);
+  const minute = parseInt(minuteStr);
+  
+  // Adjust for PM
+  if (period === 'PM' && hour < 12) {
+    hour += 12;
+  }
+  // Adjust for 12 AM
+  if (period === 'AM' && hour === 12) {
+    hour = 0;
+  }
+  
+  return hour + minute / 60;
+};
+
+// Get the user's timezone
+export const getUserTimezone = (): string => {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+};
+

@@ -1,17 +1,20 @@
+
 import React, { useState, useEffect } from 'react';
 import ScheduleVisualizer from './ScheduleVisualizer';
 import CustomizationPanel from './CustomizationPanel';
 import ResearchInfo from './ResearchInfo';
 import { standardSchedules } from '../utils/lightingStandards';
-import { getCurrentLightSettings } from '../utils/scheduleGenerator';
+import { getCurrentLightSettings, getUserTimezone } from '../utils/scheduleGenerator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Sun, Moon, Clock, Info } from "lucide-react";
+import { Sun, Moon, Clock, Info, Globe } from "lucide-react";
+
 const LightingSchedule: React.FC = () => {
   const [currentScheduleIndex, setCurrentScheduleIndex] = useState(0);
   const [activeSchedule, setActiveSchedule] = useState(standardSchedules[0]);
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  const [timezone, setTimezone] = useState<string>(getUserTimezone());
 
   // Update current time every minute
   useEffect(() => {
@@ -35,6 +38,10 @@ const LightingSchedule: React.FC = () => {
 
   // Get current lighting recommendation
   const currentSettings = getCurrentLightSettings(activeSchedule.schedule, currentTime.getHours() + currentTime.getMinutes() / 60);
+  
+  // Check if this is a sun-adjusted schedule
+  const hasSunAdjustment = activeSchedule.description?.includes('Adjusted for');
+
   return <div className="w-full max-w-7xl mx-auto">
       <div className="mb-8">
         <h2 className="text-3xl font-bold tracking-tight text-gray-900 mb-1">Earthlight Scheduler</h2>
@@ -51,12 +58,21 @@ const LightingSchedule: React.FC = () => {
                   Based on {activeSchedule.name}
                 </CardDescription>
               </div>
-              <Badge variant="secondary" className="bg-white text-lumify-blue-dark">
-                {currentTime.toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-              </Badge>
+              <div className="flex flex-col items-end gap-2">
+                <Badge variant="secondary" className="bg-white text-lumify-blue-dark">
+                  {currentTime.toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZoneName: 'short'
+                  })}
+                </Badge>
+                {hasSunAdjustment && (
+                  <Badge variant="outline" className="bg-white/10 border-white/30 text-white text-xs">
+                    <Globe className="h-3 w-3 mr-1" />
+                    {timezone}
+                  </Badge>
+                )}
+              </div>
             </div>
           </CardHeader>
           
@@ -92,6 +108,13 @@ const LightingSchedule: React.FC = () => {
                 </div>
               </div>
             </div>
+            
+            {hasSunAdjustment && (
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-700 flex items-center">
+                <Sun className="h-4 w-4 mr-2 text-amber-500" />
+                <span>This schedule is optimized based on your location's sunrise and sunset times.</span>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -113,7 +136,11 @@ const LightingSchedule: React.FC = () => {
         </TabsList>
         
         <TabsContent value="customize">
-          <CustomizationPanel onScheduleChange={handleScheduleChange} onCustomScheduleChange={handleCustomScheduleChange} currentScheduleIndex={currentScheduleIndex} />
+          <CustomizationPanel 
+            onScheduleChange={handleScheduleChange} 
+            onCustomScheduleChange={handleCustomScheduleChange} 
+            currentScheduleIndex={currentScheduleIndex} 
+          />
         </TabsContent>
         
         <TabsContent value="research">

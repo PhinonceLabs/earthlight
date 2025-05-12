@@ -1,11 +1,16 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { MapPin, Sun, Moon, Clock } from "lucide-react";
 import { standardSchedules } from '../utils/lightingStandards';
-import { generateCustomSchedule } from '../utils/scheduleGenerator';
+import { generateCustomSchedule, formatTime, fetchSunTimes, SunTimesData, getUserTimezone } from '../utils/scheduleGenerator';
+import { useToast } from '@/components/ui/use-toast';
 
 interface CustomizationPanelProps {
   onScheduleChange: (scheduleIndex: number) => void;
@@ -18,18 +23,64 @@ const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
   onCustomScheduleChange,
   currentScheduleIndex
 }) => {
+  const { toast } = useToast();
   const [wakeTime, setWakeTime] = useState<number>(6);
   const [sleepTime, setSleepTime] = useState<number>(22);
   const [maxIntensity, setMaxIntensity] = useState<number>(100);
+  const [useSunTimes, setUseSunTimes] = useState<boolean>(false);
+  const [latitude, setLatitude] = useState<string>("");
+  const [longitude, setLongitude] = useState<string>("");
+  const [timezone, setTimezone] = useState<string>(getUserTimezone());
+  const [sunTimes, setSunTimes] = useState<SunTimesData | null>(null);
   
-  // Handle time format conversion
-  const formatTime = (hour: number): string => {
-    const h = Math.floor(hour);
-    const m = Math.round((hour - h) * 60);
-    const period = h >= 12 ? 'PM' : 'AM';
-    const displayHour = h % 12 === 0 ? 12 : h % 12;
-    return `${displayHour}:${m.toString().padStart(2, '0')} ${period}`;
-  };
+  // Try to get user's location on first load
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLatitude(position.coords.latitude.toString());
+          setLongitude(position.coords.longitude.toString());
+        },
+        (error) => {
+          console.log('Error getting location:', error);
+        }
+      );
+    }
+  }, []);
+  
+  // Fetch sun times when latitude/longitude changes and sun times are enabled
+  useEffect(() => {
+    const fetchSunTimesData = async () => {
+      if (useSunTimes && latitude && longitude) {
+        try {
+          const lat = parseFloat(latitude);
+          const lng = parseFloat(longitude);
+          
+          if (isNaN(lat) || isNaN(lng)) {
+            return;
+          }
+          
+          const sunData = await fetchSunTimes(lat, lng, timezone);
+          if (sunData) {
+            setSunTimes(sunData);
+            toast({
+              title: "Sun times updated",
+              description: `Sunrise: ${sunData.sunrise.toLocaleTimeString()}, Sunset: ${sunData.sunset.toLocaleTimeString()}`,
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching sun times:', error);
+          toast({
+            title: "Error fetching sun data",
+            description: "Could not get sunrise and sunset times",
+            variant: "destructive",
+          });
+        }
+      }
+    };
+    
+    fetchSunTimesData();
+  }, [latitude, longitude, useSunTimes, timezone, toast]);
   
   // Generate a custom schedule
   const handleGenerateCustom = () => {
@@ -37,15 +88,56 @@ const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
       wakeTime,
       sleepTime,
       maxIntensity,
-      standardSchedules[currentScheduleIndex].name
+      standardSchedules[currentScheduleIndex].name,
+      useSunTimes ? sunTimes : undefined
     );
+    
+    let scheduleDescription = `Wake: ${formatTime(wakeTime)}, Sleep: ${formatTime(sleepTime)}, Max: ${maxIntensity}%`;
+    
+    if (useSunTimes && sunTimes) {
+      scheduleDescription += `, Adjusted for ${sunTimes.timezone}`;
+    }
     
     onCustomScheduleChange({
       name: "Custom Schedule",
-      description: `Wake: ${formatTime(wakeTime)}, Sleep: ${formatTime(sleepTime)}, Max: ${maxIntensity}%`,
+      description: scheduleDescription,
       schedule: customSchedule,
-      citations: ["Generated based on selected preset and custom parameters."]
+      citations: [
+        "Generated based on selected preset and custom parameters.",
+        useSunTimes && sunTimes ? 
+          `Optimized for sunrise at ${sunTimes.sunrise.toLocaleTimeString()} and sunset at ${sunTimes.sunset.toLocaleTimeString()}` : 
+          null
+      ].filter(Boolean)
     });
+  };
+  
+  // Handle getting current location
+  const handleGetLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLatitude(position.coords.latitude.toString());
+          setLongitude(position.coords.longitude.toString());
+          toast({
+            title: "Location updated",
+            description: `Lat: ${position.coords.latitude.toFixed(4)}, Lng: ${position.coords.longitude.toFixed(4)}`,
+          });
+        },
+        (error) => {
+          toast({
+            title: "Location error",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+      );
+    } else {
+      toast({
+        title: "Geolocation not supported",
+        description: "Your browser doesn't support geolocation",
+        variant: "destructive",
+      });
+    }
   };
   
   return (
@@ -126,6 +218,82 @@ const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
                   className="w-full" 
                 />
               </div>
+              
+              <Separator className="my-4" />
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-base" htmlFor="use-sun-times">Adjust Based on Sunrise/Sunset</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Customize schedule based on your location's daylight
+                  </p>
+                </div>
+                <Switch 
+                  id="use-sun-times" 
+                  checked={useSunTimes} 
+                  onCheckedChange={setUseSunTimes} 
+                />
+              </div>
+              
+              {useSunTimes && (
+                <div className="space-y-3 mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="timezone">Time Zone</Label>
+                    <div className="w-[240px]">
+                      <Input 
+                        id="timezone"
+                        value={timezone} 
+                        onChange={(e) => setTimezone(e.target.value)}
+                        placeholder="e.g., America/New_York"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor="latitude">Latitude</Label>
+                      <Input 
+                        id="latitude"
+                        value={latitude} 
+                        onChange={(e) => setLatitude(e.target.value)}
+                        placeholder="e.g., 40.7128"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="longitude">Longitude</Label>
+                      <Input 
+                        id="longitude"
+                        value={longitude} 
+                        onChange={(e) => setLongitude(e.target.value)}
+                        placeholder="e.g., -74.0060"
+                      />
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full mt-2"
+                    onClick={handleGetLocation}
+                  >
+                    <MapPin className="w-4 h-4 mr-2" />
+                    Use My Location
+                  </Button>
+                  
+                  {sunTimes && (
+                    <div className="text-sm mt-2 space-y-1 text-gray-600">
+                      <p className="flex items-center">
+                        <Sun className="w-4 h-4 mr-1 text-amber-500" />
+                        Sunrise: {sunTimes.sunrise.toLocaleTimeString()}
+                      </p>
+                      <p className="flex items-center">
+                        <Moon className="w-4 h-4 mr-1 text-blue-500" />
+                        Sunset: {sunTimes.sunset.toLocaleTimeString()}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
