@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { MapPin, Sun, Moon, Clock } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MapPin, Sun, Moon, Clock, Globe } from "lucide-react";
 import { standardSchedules } from '../utils/lightingStandards';
 import { generateCustomSchedule, formatTime, fetchSunTimes, SunTimesData, getUserTimezone } from '../utils/scheduleGenerator';
 import { useToast } from '@/components/ui/use-toast';
@@ -17,6 +18,30 @@ interface CustomizationPanelProps {
   onCustomScheduleChange: (schedule: any) => void;
   currentScheduleIndex: number;
 }
+
+// Common timezones for the dropdown
+const commonTimezones = [
+  'America/New_York',
+  'America/Chicago', 
+  'America/Denver',
+  'America/Los_Angeles',
+  'America/Toronto',
+  'America/Vancouver',
+  'Europe/London',
+  'Europe/Paris',
+  'Europe/Berlin',
+  'Europe/Rome',
+  'Europe/Madrid',
+  'Asia/Tokyo',
+  'Asia/Shanghai',
+  'Asia/Hong_Kong',
+  'Asia/Singapore',
+  'Asia/Mumbai',
+  'Australia/Sydney',
+  'Australia/Melbourne',
+  'Pacific/Auckland',
+  'UTC'
+];
 
 const CustomizationPanel: React.FC<CustomizationPanelProps> = ({ 
   onScheduleChange, 
@@ -221,6 +246,32 @@ const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
               
               <Separator className="my-4" />
               
+              <div className="space-y-3">
+                <div className="space-y-0.5">
+                  <Label className="text-base flex items-center">
+                    <Globe className="h-4 w-4 mr-2" />
+                    Time Zone
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Select your current time zone
+                  </p>
+                </div>
+                <Select value={timezone} onValueChange={setTimezone}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select timezone" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white max-h-60 z-50">
+                    {commonTimezones.map((tz) => (
+                      <SelectItem key={tz} value={tz}>
+                        {tz.replace(/_/g, ' ')}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <Separator className="my-4" />
+              
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label className="text-base" htmlFor="use-sun-times">Adjust Based on Sunrise/Sunset</Label>
@@ -237,18 +288,6 @@ const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
               
               {useSunTimes && (
                 <div className="space-y-3 mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="timezone">Time Zone</Label>
-                    <div className="w-[240px]">
-                      <Input 
-                        id="timezone"
-                        value={timezone} 
-                        onChange={(e) => setTimezone(e.target.value)}
-                        placeholder="e.g., America/New_York"
-                      />
-                    </div>
-                  </div>
-                  
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <Label htmlFor="latitude">Latitude</Label>
