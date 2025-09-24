@@ -17,6 +17,7 @@ import { standardSchedules, LightingSchedule as LightingScheduleType } from '../
 const Index = () => {
   const [currentScheduleIndex, setCurrentScheduleIndex] = useState(0);
   const [customSchedule, setCustomSchedule] = useState<LightingScheduleType | null>(null);
+  const [roiData, setRoiData] = useState<any>(null);
 
   const activeSchedule = customSchedule || standardSchedules[currentScheduleIndex];
 
@@ -117,7 +118,7 @@ const Index = () => {
             </TabsContent>
 
             <TabsContent value="roi" className="space-y-4">
-              <ROICalculator />
+              <ROICalculator onROICalculated={setRoiData} />
             </TabsContent>
 
             <TabsContent value="research" className="space-y-4">
@@ -125,7 +126,7 @@ const Index = () => {
             </TabsContent>
 
             <TabsContent value="report" className="space-y-4">
-              <FinalReport currentSchedule={activeSchedule} />
+              <FinalReport currentSchedule={activeSchedule} roiData={roiData} />
             </TabsContent>
           </Card>
         </Tabs>

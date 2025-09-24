@@ -25,7 +25,11 @@ interface ROIResults {
   paybackPeriod: number;
 }
 
-const ROICalculator = () => {
+interface ROICalculatorProps {
+  onROICalculated?: (data: any) => void;
+}
+
+const ROICalculator: React.FC<ROICalculatorProps> = ({ onROICalculated }) => {
   const [inputs, setInputs] = useState<ROIInputs>({
     employees: 100,
     averageSalary: 65000,
@@ -63,7 +67,7 @@ const ROICalculator = () => {
     const roiPercentage = ((totalAnnualSavings - inputs.lightingCost) / inputs.lightingCost) * 100;
     const paybackPeriod = inputs.lightingCost / totalAnnualSavings;
 
-    setResults({
+    const calculatedResults = {
       productivityGain,
       reducedAbsenteeism,
       reducedTurnover,
@@ -71,7 +75,19 @@ const ROICalculator = () => {
       totalAnnualSavings,
       roiPercentage,
       paybackPeriod
-    });
+    };
+
+    setResults(calculatedResults);
+    
+    // Pass data to parent component for the report
+    if (onROICalculated) {
+      onROICalculated({
+        annualSavings: totalAnnualSavings,
+        roiPercentage: roiPercentage,
+        paybackPeriod: paybackPeriod,
+        totalInvestment: inputs.lightingCost
+      });
+    }
   };
 
   const formatCurrency = (amount: number) => {
