@@ -41,7 +41,7 @@ const LightingSchedule: React.FC = () => {
   const hasSunAdjustment = activeSchedule.description?.includes('Adjusted for');
   return <div className="w-full max-w-7xl mx-auto">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold tracking-tight text-gray-900 mb-1">Sunlight on Demand Scheduler</h2>
+        <h2 className="text-3xl font-bold tracking-tight text-gray-900 mb-1">Earthlight Scheduler</h2>
         <p className="text-lg text-gray-600">Research-based lighting recommendations for optimal human health.</p>
       </div>
       
