@@ -34,7 +34,7 @@ const Index = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
-            Sunlight on Demand
+            Earthlight
           </h1>
           <p className="text-lg text-gray-600 max-w-3xl mx-auto">
             Science-based lighting schedules for architecture and lighting professionals. 
