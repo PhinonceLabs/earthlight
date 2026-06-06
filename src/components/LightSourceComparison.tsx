@@ -116,7 +116,8 @@ const PRESETS: LightSource[] = [
       { name: 'Earthlight Dynamic Circadian Fixture', manufacturer: 'Earthlight' },
       { name: 'BIOS SkyBlue Circadian', manufacturer: 'BIOS Lighting', model: 'SkyBlue', url: 'https://bioslighting.com/' },
       { name: 'Ketra Natural Show', manufacturer: 'Lutron / Ketra', model: 'D3 + Natural Show', url: 'https://www.ketra.com/' },
-        { name: 'Korrus (Ecosense) Circadian', manufacturer: 'Korrus', url: 'https://www.korrus.com/' },
+      { name: 'Korrus (Ecosense) Circadian', manufacturer: 'Korrus', url: 'https://www.korrus.com/' },
+      { name: 'SENSO Circadian Lighting with Nano-Lit Light Engine', manufacturer: 'Nano-Lit Technologies', url: 'https://www.nano-lit.com/' },
     ],
     research: [
       { citation: 'Figueiro, M.G. et al. (2017). The impact of daytime light exposures on sleep and mood in office workers. Sleep Health, 3(3), 204-215.', finding: 'Programmed high-melanopic morning light improved sleep quality and reduced depression scores in office workers.', url: 'https://www.sciencedirect.com/science/article/pii/S2352721817300578' },
