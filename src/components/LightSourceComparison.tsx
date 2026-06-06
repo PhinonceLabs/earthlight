@@ -356,6 +356,89 @@ const LightSourceComparison: React.FC<Props> = ({
           </CardContent>
         </Card>
       )}
+
+      {rows.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center">
+              <BookOpen className="h-5 w-5 mr-2 text-primary" />
+              Supporting Research & Products
+            </CardTitle>
+            <CardDescription>
+              Peer-reviewed research backing each source type, plus representative commercial products lighting designers can specify.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Accordion type="multiple" className="w-full">
+              {rows.map(r => (
+                <AccordionItem key={r.source.id} value={r.source.id}>
+                  <AccordionTrigger>
+                    <div className="flex items-center gap-2 text-left">
+                      <Lightbulb className="h-4 w-4 text-primary" />
+                      <span className="font-medium">{r.source.name}</span>
+                      <Badge variant="outline" className="text-xs ml-2">{r.source.type}</Badge>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                      <div>
+                        <div className="flex items-center gap-2 mb-3 text-sm font-semibold">
+                          <Package className="h-4 w-4 text-primary" />
+                          Representative Products
+                        </div>
+                        <ul className="space-y-2">
+                          {(r.source.products ?? []).map((p, i) => (
+                            <li key={i} className="text-sm border-l-2 border-primary/30 pl-3">
+                              <div className="font-medium">{p.name}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {p.manufacturer}{p.model ? ` · ${p.model}` : ''}
+                              </div>
+                              {p.url && (
+                                <a
+                                  href={p.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-primary inline-flex items-center gap-1 hover:underline"
+                                >
+                                  Manufacturer page <ExternalLink className="h-3 w-3" />
+                                </a>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-3 text-sm font-semibold">
+                          <BookOpen className="h-4 w-4 text-primary" />
+                          Peer-Reviewed Research
+                        </div>
+                        <ul className="space-y-3">
+                          {(r.source.research ?? []).map((ref, i) => (
+                            <li key={i} className="text-sm border-l-2 border-primary/30 pl-3">
+                              <div className="text-xs italic text-muted-foreground">{ref.citation}</div>
+                              <div className="mt-1">{ref.finding}</div>
+                              {ref.url && (
+                                <a
+                                  href={ref.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-primary inline-flex items-center gap-1 hover:underline mt-1"
+                                >
+                                  View source <ExternalLink className="h-3 w-3" />
+                                </a>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
