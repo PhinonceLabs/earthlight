@@ -13,18 +13,19 @@ The repo was rebuilt on Next.js from a Vite SPA POC in commit `f34650a Rebuild P
 ```bash
 npm i              # install
 npm run dev        # next dev (default port 3000)
-npm run build      # next build
+npm run build      # next build; pure app build, no DB mutations
+npm run build:with-migrations  # npm run db:migrate && npm run build for explicit serialized deploys
 npm run start      # next start (run after build)
 npm run lint       # eslint flat config (eslint.config.js)
 npm run typecheck  # next typegen && tsc --noEmit  — gate for TS errors
 npm run db:generate  # drizzle-kit generate  (no DB connection needed)
-npm run db:migrate   # drizzle-kit migrate    (requires DATABASE_URL)
-npm run db:studio    # drizzle-kit studio     (requires DATABASE_URL)
+npm run db:migrate   # drizzle-kit migrate    (prefers DATABASE_MIGRATION_URL / DATABASE_URL_UNPOOLED)
+npm run db:studio    # drizzle-kit studio     (prefers DATABASE_MIGRATION_URL / DATABASE_URL_UNPOOLED)
 ```
 
 There is no test runner. `npm run lint` and `npm run typecheck` are the only automated gates.
 
-`DATABASE_URL` (Neon Postgres connection string) and Clerk env vars (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, and the Clerk URL overrides) must be set for runtime. `drizzle-kit generate` is the one command that works without `DATABASE_URL` — it falls back to a placeholder in `drizzle.config.ts` so migrations can be authored offline.
+`DATABASE_URL` (Neon pooled/serverless Postgres connection string) and Clerk env vars (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, and the Clerk URL overrides) must be set for runtime. Drizzle CLI commands load `.env.local` / `.env` and prefer `DATABASE_MIGRATION_URL`, then Vercel/Neon's `DATABASE_URL_UNPOOLED`, then `DATABASE_URL`; use an unpooled URL for migrations whenever available. `drizzle-kit generate` is the one command that works without a database URL — it falls back to a placeholder in `drizzle.config.ts` so migrations can be authored offline.
 
 ## Architecture
 
@@ -56,7 +57,7 @@ Slices today: `projects`, `scenarios`, `roi`, `reports`, `export` (export is ser
 
 - `index.ts` — Neon HTTP driver + Drizzle. Throws at import time if `DATABASE_URL` is missing. `import "server-only"` enforces server-only use.
 - `schema.ts` — `app_users`, `projects`, `scenarios`, `roi_snapshots`, `report_snapshots`. Lighting schedules, ROI inputs/assumptions/results, and report payloads are all `jsonb`. Two Postgres enums (`project_type`, `scenario_source`) are sourced from `src/server/domain/constants.ts` (which re-exports `src/domain/constants.ts`) — change the constants there and regenerate migrations.
-- `migrations/` — output of `drizzle-kit generate`. Regenerate after any schema edit; do not hand-edit.
+- `migrations/` — output of `drizzle-kit generate`. Regenerate after any schema edit; do not hand-edit. Apply migrations with `npm run db:migrate` as an explicit release step; do not hide DDL inside ordinary `npm run build` unless intentionally using `npm run build:with-migrations`.
 
 **Domain math:**
 

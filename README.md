@@ -18,9 +18,9 @@ Requires Node.js 20+ and npm. Then:
 git clone https://github.com/PhinonceLabs/earthlight.git
 cd earthlight
 npm install
-cp .env.example .env.local   # then fill in the values below
-npm run db:migrate           # apply Drizzle migrations to your Neon DB
-npm run dev                  # http://localhost:3000
+cp .env.local.example .env.local  # then fill in the values below
+npm run db:migrate              # apply Drizzle migrations to your Neon DB
+npm run dev                     # http://localhost:3000
 ```
 
 ### Environment variables
@@ -29,7 +29,7 @@ Required for runtime:
 
 | Variable | Purpose |
 | --- | --- |
-| `DATABASE_URL` | Neon Postgres connection string |
+| `DATABASE_URL` | Neon Postgres pooled/serverless connection string for app runtime |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk frontend key |
 | `CLERK_SECRET_KEY` | Clerk backend key |
 | `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | `/sign-in` |
@@ -37,19 +37,27 @@ Required for runtime:
 | `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL` | `/projects` |
 | `NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL` | `/projects` |
 
-`npm run db:generate` is the one script that works without `DATABASE_URL` — it uses a placeholder in `drizzle.config.ts` so migrations can be authored offline.
+Recommended for migrations:
+
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_MIGRATION_URL` | Explicit Drizzle migration URL; prefer an unpooled Neon connection string |
+| `DATABASE_URL_UNPOOLED` | Vercel/Neon-provided unpooled fallback used by Drizzle if `DATABASE_MIGRATION_URL` is unset |
+
+Drizzle migration commands use `DATABASE_MIGRATION_URL`, then `DATABASE_URL_UNPOOLED`, then `DATABASE_URL`. `npm run db:generate` is the one script that works without a database URL — it uses a placeholder in `drizzle.config.ts` so migrations can be authored offline.
 
 ## Scripts
 
 ```sh
 npm run dev          # next dev
-npm run build        # next build
-npm run start        # next start (after build)
-npm run lint         # eslint flat config
-npm run typecheck    # next typegen && tsc --noEmit
-npm run db:generate  # drizzle-kit generate
-npm run db:migrate   # drizzle-kit migrate (requires DATABASE_URL)
-npm run db:studio    # drizzle-kit studio  (requires DATABASE_URL)
+npm run build                 # next build; does not run migrations
+npm run build:with-migrations # npm run db:migrate && npm run build
+npm run start                 # next start (after build)
+npm run lint                  # eslint flat config
+npm run typecheck             # next typegen && tsc --noEmit
+npm run db:generate           # drizzle-kit generate
+npm run db:migrate            # drizzle-kit migrate (prefers DATABASE_MIGRATION_URL / DATABASE_URL_UNPOOLED)
+npm run db:studio             # drizzle-kit studio  (prefers DATABASE_MIGRATION_URL / DATABASE_URL_UNPOOLED)
 ```
 
 There is no test runner. `lint` and `typecheck` are the only automated gates.
@@ -68,4 +76,4 @@ See `CLAUDE.md` for architecture conventions, the server-action contract, and kn
 
 ## Deployment
 
-Deploys to Vercel from `main`. Set the environment variables above in the Vercel project settings; the build runs `next build`. Drizzle migrations are not run automatically — run `npm run db:migrate` against the production `DATABASE_URL` as part of release.
+Deploys to Vercel from `main`. Set the runtime variables above in Vercel project settings; the ordinary build runs `next build` and must not mutate database state. Run `npm run db:migrate` as an explicit release/provisioning step before first traffic or before deploying schema-dependent code, preferably with `DATABASE_MIGRATION_URL` or Vercel/Neon's `DATABASE_URL_UNPOOLED`. Use `npm run build:with-migrations` only in intentionally serialized environments where coupling deploy success to database DDL is acceptable.
