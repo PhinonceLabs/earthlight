@@ -5,7 +5,7 @@ import { projectIdAccessWhere, projectAccessWhere } from "@/server/auth/authoriz
 import { requireAppIdentity } from "@/server/auth/identity";
 import { db } from "@/server/db";
 import { projects, reportSnapshots } from "@/server/db/schema";
-import { reportSnapshotDataSchema, type ReportSnapshotData } from "@/server/validation/report";
+import { reportSnapshotDataSchema, type ReportSnapshotData } from "@/domain/validation/report";
 
 export type ReportSnapshotSummaryDTO = {
   id: string;

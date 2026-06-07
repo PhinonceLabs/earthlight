@@ -1,1 +1,0 @@
-export { ROICalculatorClient as default, ROICalculatorClient } from "@/features/roi/components/ROICalculatorClient";

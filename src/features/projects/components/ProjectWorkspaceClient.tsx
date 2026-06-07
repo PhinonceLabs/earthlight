@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
+import { describeActionError } from "@/features/shared/actionErrors";
 import ExportImportPanel from "@/components/ExportImportPanel";
 import LightSourceComparison from "@/components/LightSourceComparison";
 import ProfessionalIntegrations from "@/components/ProfessionalIntegrations";
@@ -41,14 +42,6 @@ type WorkspaceProps = {
 
 function sourceLabel(source: ScenarioSummaryDTO["source"]) {
   return source.replace(/_/g, " ").replace(/^./, (char) => char.toUpperCase());
-}
-
-function describeActionError(result: { message: string; fieldErrors?: Record<string, string[]> }) {
-  const fieldMessages = Object.entries(result.fieldErrors ?? {}).flatMap(([field, messages]) =>
-    messages.map((message) => `${field}: ${message}`),
-  );
-
-  return [result.message, ...fieldMessages].join("\n");
 }
 
 

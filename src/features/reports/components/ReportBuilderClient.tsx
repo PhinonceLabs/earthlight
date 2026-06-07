@@ -9,17 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
+import { describeActionError } from "@/features/shared/actionErrors";
 import type { RoiSnapshotDTO } from "@/features/roi/queries";
 import type { ReportSnapshotSummaryDTO } from "@/features/reports/queries";
 import { createReportSnapshot } from "@/features/reports/actions";
-
-function describeActionError(result: { message: string; fieldErrors?: Record<string, string[]> }) {
-  const fieldMessages = Object.entries(result.fieldErrors ?? {}).flatMap(([field, messages]) =>
-    messages.map((message) => `${field}: ${message}`),
-  );
-
-  return [result.message, ...fieldMessages].join("\n");
-}
 
 export function ReportBuilderClient({
   projectId,

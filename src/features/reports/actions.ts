@@ -3,22 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/server/db";
 import { reportSnapshots } from "@/server/db/schema";
-import { reportSnapshotCreateSchema } from "@/server/validation/report";
-import type { ActionResult } from "@/features/projects/actions";
+import { reportSnapshotCreateSchema } from "@/domain/validation/report";
+import { validationError, type ActionResult } from "@/features/shared/actions";
 import { getProjectForCurrentIdentity } from "@/features/projects/queries";
 import { getScenarioForProject } from "@/features/scenarios/queries";
 import { getRoiSnapshotForProject } from "@/features/roi/queries";
 import { createReportSnapshotData, REPORT_VERSION } from "./normalizers";
-
-type ZodLikeError = { flatten: () => { fieldErrors: Record<string, string[]> } };
-
-function validationError(message: string, error: ZodLikeError): ActionResult<never> {
-  return {
-    ok: false,
-    message,
-    fieldErrors: error.flatten().fieldErrors,
-  };
-}
 
 function revalidateReportPaths(projectId: string, scenarioId: string, reportId?: string) {
   revalidatePath("/projects");

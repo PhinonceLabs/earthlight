@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
+import { downloadTextFile } from '@/lib/browser-download';
 import { 
   Download, 
   Upload, 
@@ -77,17 +78,11 @@ const ProfessionalIntegrations: React.FC<ProfessionalIntegrationsProps> = ({
       }
     };
 
-    const blob = new Blob([JSON.stringify(revitData, null, 2)], {
-      type: 'application/json'
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `revit-lighting-family-${format(new Date(), 'yyyy-MM-dd')}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadTextFile(
+      JSON.stringify(revitData, null, 2),
+      `revit-lighting-family-${format(new Date(), 'yyyy-MM-dd')}.json`,
+      'application/json',
+    );
 
     toast({
       title: "Revit Export Complete",
@@ -151,15 +146,7 @@ Energy_Star=Yes
 DLC_Listed=Yes
 `;
 
-    const blob = new Blob([ldtContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `dialux-luminaire-${format(new Date(), 'yyyy-MM-dd')}.ldt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadTextFile(ldtContent, `dialux-luminaire-${format(new Date(), 'yyyy-MM-dd')}.ldt`, 'text/plain');
 
     toast({
       title: "DIALux Export Complete",
@@ -221,17 +208,11 @@ DLC_Listed=Yes
       }
     };
 
-    const blob = new Blob([JSON.stringify(agi32Data, null, 2)], {
-      type: 'application/json'
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `agi32-project-${format(new Date(), 'yyyy-MM-dd')}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadTextFile(
+      JSON.stringify(agi32Data, null, 2),
+      `agi32-project-${format(new Date(), 'yyyy-MM-dd')}.json`,
+      'application/json',
+    );
 
     toast({
       title: "AGi32 Export Complete",
@@ -293,15 +274,7 @@ const CircadianLightingAPI = {
 // CircadianLightingAPI.sendToRevit({ projectId: 'your-project-id', familyType: 'LED_Fixture' });
 `;
 
-    const blob = new Blob([pluginScript], { type: 'text/javascript' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'circadian-lighting-plugin.js';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadTextFile(pluginScript, 'circadian-lighting-plugin.js', 'text/javascript');
 
     toast({
       title: "Plugin Script Generated",

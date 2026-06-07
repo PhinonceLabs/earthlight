@@ -4,23 +4,13 @@ import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { ROI_ASSUMPTIONS, ROI_ASSUMPTIONS_VERSION } from "@/domain/roi/assumptions";
 import { calculateRoiRange } from "@/domain/roi/calculator";
-import type { ActionResult } from "@/features/projects/actions";
+import { validationError, type ActionResult } from "@/features/shared/actions";
 import { projectIdAccessWhere } from "@/server/auth/authorization";
 import { requireAppIdentity } from "@/server/auth/identity";
 import { db } from "@/server/db";
 import { roiSnapshots, scenarios } from "@/server/db/schema";
-import { roiSnapshotCreateSchema, roiSnapshotDataSchema } from "@/server/validation/roi";
+import { roiSnapshotCreateSchema, roiSnapshotDataSchema } from "@/domain/validation/roi";
 import type { RoiSnapshotDTO } from "./queries";
-
-type ZodLikeError = { flatten: () => { fieldErrors: Record<string, string[]> } };
-
-function validationError(message: string, error: ZodLikeError): ActionResult<never> {
-  return {
-    ok: false,
-    message,
-    fieldErrors: error.flatten().fieldErrors,
-  };
-}
 
 function revalidateRoiPaths(projectId: string, scenarioId?: string) {
   revalidatePath("/projects");

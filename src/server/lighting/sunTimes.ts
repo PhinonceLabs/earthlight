@@ -2,7 +2,7 @@ import "server-only";
 
 import { format } from "date-fns";
 import { z } from "zod";
-import { lightingLocationSchema } from "@/server/validation/lighting";
+import { lightingLocationSchema } from "@/domain/validation/lighting";
 import type { SunTimesData } from "@/utils/scheduleGenerator";
 
 const sunTimesRequestSchema = lightingLocationSchema.extend({

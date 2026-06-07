@@ -9,33 +9,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { importScenarioFromJson } from "@/features/scenarios/actions";
+import { describeActionError } from "@/features/shared/actionErrors";
 import type { ScenarioDetailDTO } from "@/features/scenarios/queries";
+import { downloadTextFile } from "@/lib/browser-download";
 import {
   scheduleExportFilename,
   serializeScheduleToCsv,
   serializeScheduleToIes,
   serializeScheduleToJson,
 } from "@/features/export/serializers";
-
-function describeActionError(result: { message: string; fieldErrors?: Record<string, string[]> }) {
-  const fieldMessages = Object.entries(result.fieldErrors ?? {}).flatMap(([field, messages]) =>
-    messages.map((message) => `${field}: ${message}`),
-  );
-
-  return [result.message, ...fieldMessages].join("\n");
-}
-
-function downloadTextFile(content: string, filename: string, type: string) {
-  const blob = new Blob([content], { type });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-  URL.revokeObjectURL(url);
-}
 
 export default function ExportImportPanel({
   projectId,

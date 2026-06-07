@@ -103,6 +103,14 @@ export const customScheduleInputSchema = z
   })
   .strict()
   .superRefine((input, ctx) => {
+    if (input.sleepTime <= input.wakeTime) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Sleep time must be later than wake time for same-day schedules.",
+        path: ["sleepTime"],
+      });
+    }
+
     if (input.useSunTimes && !input.location) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

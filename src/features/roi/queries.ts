@@ -5,7 +5,7 @@ import { projectIdAccessWhere } from "@/server/auth/authorization";
 import { requireAppIdentity } from "@/server/auth/identity";
 import { db } from "@/server/db";
 import { projects, roiSnapshots } from "@/server/db/schema";
-import { roiSnapshotDataSchema, type RoiSnapshotData } from "@/server/validation/roi";
+import { roiSnapshotDataSchema, type RoiSnapshotData } from "@/domain/validation/roi";
 
 export type RoiSnapshotDTO = RoiSnapshotData & {
   id: string;

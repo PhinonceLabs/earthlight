@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import type { ReportSnapshotDTO } from "@/features/reports/queries";
 import { reportExportFilename, serializeReportSnapshotToJson } from "@/features/export/serializers";
+import { downloadTextFile } from "@/lib/browser-download";
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -18,15 +19,7 @@ function formatCurrency(amount: number): string {
 }
 
 function downloadReportJson(report: ReportSnapshotDTO) {
-  const blob = new Blob([serializeReportSnapshotToJson(report.reportData)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = reportExportFilename();
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-  URL.revokeObjectURL(url);
+  downloadTextFile(serializeReportSnapshotToJson(report.reportData), reportExportFilename(), "application/json");
 }
 
 export function ReportViewer({ report }: { report: ReportSnapshotDTO }) {

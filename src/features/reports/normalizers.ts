@@ -4,7 +4,7 @@ import { deriveDisplayIntensity, deriveDisplayTemperature } from "@/features/sce
 import type { ProjectDetailDTO } from "@/features/projects/queries";
 import type { ScenarioDetailDTO } from "@/features/scenarios/queries";
 import type { RoiSnapshotDTO } from "@/features/roi/queries";
-import { reportSnapshotDataSchema, type ReportSnapshotData } from "@/server/validation/report";
+import { reportSnapshotDataSchema, type ReportSnapshotData } from "@/domain/validation/report";
 import type { ProjectType } from "@/server/db/schema";
 
 export const REPORT_VERSION = "2026-06-poc-v1";

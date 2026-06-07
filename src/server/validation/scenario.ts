@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { scenarioSourceValues } from "@/server/domain/constants";
-import { customScheduleInputSchema, lightingScheduleSchema } from "./lighting";
+import { scenarioSourceValues } from "@/domain/constants";
+import { customScheduleInputSchema, lightingScheduleSchema } from "@/domain/validation/lighting";
 
 export const scenarioSourceSchema = z.enum(scenarioSourceValues);
 

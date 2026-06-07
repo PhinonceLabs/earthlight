@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { projectTypeValues, type ProjectTypeValue } from "@/server/domain/constants";
+import { describeActionError } from "@/features/shared/actionErrors";
+import { projectTypeValues, type ProjectTypeValue } from "@/domain/constants";
 import { createProject, deleteProject, updateProject } from "../actions";
 import type { ProjectSummaryDTO } from "../queries";
 
@@ -54,14 +55,6 @@ function formToInput(form: ProjectFormState) {
 
 function projectTypeLabel(projectType: ProjectTypeValue) {
   return projectType.replace(/_/g, " ").replace(/^./, (char) => char.toUpperCase());
-}
-
-function describeActionError(result: { message: string; fieldErrors?: Record<string, string[]> }) {
-  const fieldMessages = Object.entries(result.fieldErrors ?? {}).flatMap(([field, messages]) =>
-    messages.map((message) => `${field}: ${message}`),
-  );
-
-  return [result.message, ...fieldMessages].join("\n");
 }
 
 function ProjectFields({

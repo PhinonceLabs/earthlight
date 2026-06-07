@@ -8,7 +8,7 @@ import { requireAppIdentity } from "@/server/auth/identity";
 import { db } from "@/server/db";
 import { projects, scenarios } from "@/server/db/schema";
 import { fetchSunTimesForLocation } from "@/server/lighting/sunTimes";
-import { customScheduleInputSchema, lightingScheduleSchema } from "@/server/validation/lighting";
+import { customScheduleInputSchema, lightingScheduleSchema } from "@/domain/validation/lighting";
 import {
   importedScheduleInputSchema,
   quickSaveScheduleInputSchema,
@@ -17,7 +17,7 @@ import {
 } from "@/server/validation/scenario";
 import { createNamedSchedule, generateCustomSchedule } from "@/utils/scheduleGenerator";
 import { standardSchedules } from "@/utils/lightingStandards";
-import type { ActionResult } from "@/features/projects/actions";
+import { validationError, type ActionResult } from "@/features/shared/actions";
 
 const quickSaveActionSchema = z.object({
   scenarioId: z.string().uuid(),
@@ -27,16 +27,6 @@ const quickSaveActionSchema = z.object({
   ),
   note: z.string().trim().max(500).optional(),
 });
-
-type ZodLikeError = { flatten: () => { fieldErrors: Record<string, string[]> } };
-
-function validationError(message: string, error: ZodLikeError): ActionResult<never> {
-  return {
-    ok: false,
-    message,
-    fieldErrors: error.flatten().fieldErrors,
-  };
-}
 
 function revalidateScenarioPaths(projectId: string, scenarioId?: string) {
   revalidatePath("/projects");

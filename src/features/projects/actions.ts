@@ -7,18 +7,7 @@ import { requireAppIdentity } from "@/server/auth/identity";
 import { db } from "@/server/db";
 import { projects } from "@/server/db/schema";
 import { projectCreateSchema, projectUpdateSchema } from "@/server/validation/project";
-
-export type ActionResult<T = void> =
-  | { ok: true; data: T }
-  | { ok: false; message: string; fieldErrors?: Record<string, string[]> };
-
-function validationError(message: string, error: { flatten: () => { fieldErrors: Record<string, string[]> } }): ActionResult<never> {
-  return {
-    ok: false,
-    message,
-    fieldErrors: error.flatten().fieldErrors,
-  };
-}
+import { validationError, type ActionResult } from "@/features/shared/actions";
 
 function revalidateProjectPaths(projectId?: string) {
   revalidatePath("/projects");

@@ -12,16 +12,9 @@ import { useToast } from "@/components/ui/use-toast";
 import { ROI_ASSUMPTIONS_VERSION } from "@/domain/roi/assumptions";
 import { calculateRoiRange } from "@/domain/roi/calculator";
 import { calculateAndSaveRoiSnapshot } from "@/features/roi/actions";
+import { describeActionError } from "@/features/shared/actionErrors";
 import type { RoiSnapshotDTO } from "@/features/roi/queries";
 import type { RoiInputs } from "@/domain/validation/roi";
-
-function describeActionError(result: { message: string; fieldErrors?: Record<string, string[]> }) {
-  const fieldMessages = Object.entries(result.fieldErrors ?? {}).flatMap(([field, messages]) =>
-    messages.map((message) => `${field}: ${message}`),
-  );
-
-  return [result.message, ...fieldMessages].join("\n");
-}
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("en-US", {

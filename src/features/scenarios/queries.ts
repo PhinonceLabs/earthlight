@@ -5,7 +5,7 @@ import { projectIdAccessWhere } from "@/server/auth/authorization";
 import { requireAppIdentity } from "@/server/auth/identity";
 import { db } from "@/server/db";
 import { projects, scenarios, type ScenarioSource } from "@/server/db/schema";
-import { lightingScheduleSchema, type LightingScheduleInput } from "@/server/validation/lighting";
+import { lightingScheduleSchema, type LightingScheduleInput } from "@/domain/validation/lighting";
 import { scenarioScheduleInputsSchema, type ScenarioScheduleInputs } from "@/server/validation/scenario";
 
 export type ScenarioSummaryDTO = {

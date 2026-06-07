@@ -3,7 +3,7 @@ import {
   exposurePointSourceValues,
   projectTypeValues,
   scenarioSourceValues,
-} from "@/server/domain/constants";
+} from "@/domain/constants";
 import {
   index,
   jsonb,

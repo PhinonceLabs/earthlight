@@ -12,6 +12,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { describeActionError } from "@/features/shared/actionErrors";
 import { standardSchedules } from "@/utils/lightingStandards";
 import { formatTime, getUserTimezone } from "@/utils/scheduleGenerator";
 import {
@@ -19,14 +20,6 @@ import {
   createScenarioFromPreset,
   importScenarioFromJson,
 } from "../actions";
-
-function describeActionError(result: { message: string; fieldErrors?: Record<string, string[]> }) {
-  const fieldMessages = Object.entries(result.fieldErrors ?? {}).flatMap(([field, messages]) =>
-    messages.map((message) => `${field}: ${message}`),
-  );
-
-  return [result.message, ...fieldMessages].join("\n");
-}
 
 const commonTimezones = [
   "America/New_York",

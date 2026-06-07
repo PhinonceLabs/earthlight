@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { projectTypeValues } from "@/server/domain/constants";
+import { projectTypeValues } from "@/domain/constants";
 
 export const projectTypeSchema = z.enum(projectTypeValues);
 
