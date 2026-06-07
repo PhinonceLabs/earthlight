@@ -15,7 +15,7 @@ export default async function ProjectsPage() {
           <Badge variant="secondary" className="mb-3">
             Authenticated projects
           </Badge>
-          <h1 className="text-4xl font-bold tracking-tight text-lumify-neutral-darker">Projects</h1>
+          <h1 className="font-display text-4xl font-medium tracking-tight text-earthlight-ink">Projects</h1>
           <p className="mt-3 max-w-2xl text-muted-foreground">
             Create authenticated Earthlight projects and persist schedule scenarios in Postgres. Ownership is enforced server-side from Clerk identity.
           </p>

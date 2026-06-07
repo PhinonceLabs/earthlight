@@ -3,85 +3,125 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===========================================================================
+   Earthlight design tokens
+   ---------------------------------------------------------------------------
+   Brand sampled from https://earthlight.app — a warm editorial system:
+   paper-cream surfaces, midnight-ink for emphasis, a vivid sun-gradient
+   accent (amber → orange) reserved for the brand mark and key affordances.
+
+   All semantic tokens are HSL triplets so shadcn primitives (Button, Card,
+   Badge, Input, …) inherit the new palette without any per-component edits.
+   =========================================================================== */
 @layer base {
   :root {
-    --background: 250 30% 98%;
-    --foreground: 240 10% 20%;
+    /* Surfaces */
+    --background: 38 53% 94%;          /* paper #F8F2E8 */
+    --foreground: 240 3% 23%;          /* graphite #38383C */
 
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 20%;
+    --card: 0 0% 100%;                 /* warm white card */
+    --card-foreground: 240 3% 23%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 20%;
+    --popover-foreground: 240 3% 23%;
 
-    --primary: 255 75% 75%;
-    --primary-foreground: 255 100% 98%;
+    /* Primary — midnight ink (matches the live-site CTA) */
+    --primary: 216 100% 16%;           /* #002253 */
+    --primary-foreground: 38 53% 97%;  /* paper-tinted white */
 
-    --secondary: 220 20% 95%;
-    --secondary-foreground: 240 10% 20%;
+    --secondary: 38 40% 90%;           /* slightly deeper paper */
+    --secondary-foreground: 216 100% 16%;
 
-    --muted: 220 20% 95%;
-    --muted-foreground: 240 5% 50%;
+    --muted: 38 30% 91%;
+    --muted-foreground: 219 9% 40%;    /* slate #5D636F */
 
-    --accent: 267 76% 75%;
-    --accent-foreground: 240 10% 20%;
+    /* Accent — sun-orange. Reserved for emphasis (hover, ring, highlights). */
+    --accent: 23 100% 52%;             /* #FF6A0A */
+    --accent-foreground: 38 53% 97%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 46%;
+    --destructive-foreground: 38 53% 97%;
 
-    --border: 220 20% 90%;
-    --input: 220 20% 90%;
-    --ring: 255 75% 75%;
+    --border: 36 18% 84%;              /* warm hairline */
+    --input: 36 18% 84%;
+    --ring: 23 100% 52%;               /* sun-orange focus ring */
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar (kept for shadcn sidebar primitive) */
+    --sidebar-background: 38 53% 96%;
+    --sidebar-foreground: 240 3% 23%;
+    --sidebar-primary: 216 100% 16%;
+    --sidebar-primary-foreground: 38 53% 97%;
+    --sidebar-accent: 38 40% 90%;
+    --sidebar-accent-foreground: 216 100% 16%;
+    --sidebar-border: 36 18% 84%;
+    --sidebar-ring: 23 100% 52%;
+
+    /* Raw brand tokens (consumed by tailwind.config.ts → theme.colors.earthlight.*).
+       Exposed as CSS vars so they're usable in inline styles and gradients too. */
+    --el-paper:      38 53% 94%;
+    --el-paper-deep: 40 45% 89%;
+    --el-paper-soft: 38 60% 97%;
+    --el-ink:        216 100% 16%;
+    --el-ink-soft:   217 60% 22%;
+    --el-graphite:   240 3% 23%;
+    --el-slate:      219 9% 40%;
+    --el-hairline:   36 18% 84%;
+    --el-sun-amber:  45 100% 51%;     /* #FFC107 */
+    --el-sun-orange: 23 100% 52%;     /* #FF6A0A */
+    --el-sun-deep:   15 98% 41%;      /* #CC3702 */
   }
 
   .dark {
-    --background: 240 10% 10%;
-    --foreground: 210 20% 98%;
+    --background: 220 50% 8%;          /* deep midnight */
+    --foreground: 38 53% 94%;
 
-    --card: 240 10% 12%;
-    --card-foreground: 210 20% 98%;
+    --card: 220 40% 11%;
+    --card-foreground: 38 53% 94%;
 
-    --popover: 240 10% 12%;
-    --popover-foreground: 210 20% 98%;
+    --popover: 220 40% 11%;
+    --popover-foreground: 38 53% 94%;
 
-    --primary: 255 75% 70%;
-    --primary-foreground: 255 10% 10%;
+    --primary: 45 100% 51%;            /* sun-amber on dark */
+    --primary-foreground: 216 100% 10%;
 
-    --secondary: 240 5% 25%;
-    --secondary-foreground: 210 20% 98%;
+    --secondary: 220 30% 16%;
+    --secondary-foreground: 38 53% 94%;
 
-    --muted: 240 5% 25%;
-    --muted-foreground: 210 20% 70%;
+    --muted: 220 25% 18%;
+    --muted-foreground: 38 20% 78%;
 
-    --accent: 267 76% 70%;
-    --accent-foreground: 210 20% 98%;
+    --accent: 23 100% 52%;
+    --accent-foreground: 38 53% 97%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive: 0 60% 40%;
+    --destructive-foreground: 38 53% 97%;
 
-    --border: 240 5% 25%;
-    --input: 240 5% 25%;
-    --ring: 255 75% 70%;
-    
-    --sidebar-background: 240 10% 10%;
-    --sidebar-foreground: 210 20% 98%;
-    --sidebar-primary: 255 75% 70%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 5% 25%;
-    --sidebar-accent-foreground: 210 20% 98%;
-    --sidebar-border: 240 5% 25%;
-    --sidebar-ring: 255 75% 70%;
+    --border: 220 20% 22%;
+    --input: 220 20% 22%;
+    --ring: 45 100% 51%;
+
+    --sidebar-background: 220 50% 8%;
+    --sidebar-foreground: 38 53% 94%;
+    --sidebar-primary: 45 100% 51%;
+    --sidebar-primary-foreground: 216 100% 10%;
+    --sidebar-accent: 220 30% 16%;
+    --sidebar-accent-foreground: 38 53% 94%;
+    --sidebar-border: 220 20% 22%;
+    --sidebar-ring: 45 100% 51%;
+
+    --el-paper:      38 53% 94%;
+    --el-paper-deep: 220 30% 14%;
+    --el-paper-soft: 220 40% 11%;
+    --el-ink:        38 53% 94%;
+    --el-ink-soft:   38 30% 80%;
+    --el-graphite:   38 53% 94%;
+    --el-slate:      38 20% 70%;
+    --el-hairline:   220 20% 22%;
+    --el-sun-amber:  45 100% 51%;
+    --el-sun-orange: 23 100% 52%;
+    --el-sun-deep:   15 98% 41%;
   }
 }
 
@@ -90,24 +130,111 @@
     @apply border-border;
   }
 
+  html {
+    /* font-family fallbacks set per-element via next/font variables on <html>. */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-body), system-ui, sans-serif;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display), Georgia, "Times New Roman", serif;
+    font-feature-settings: "ss01", "ss02";
+    letter-spacing: -0.015em;
   }
 }
 
-/* Custom styling */
+/* ===========================================================================
+   Atmosphere — backgrounds & textures that carry the brand mood
+   =========================================================================== */
+@layer utilities {
+  /* Soft radial sun-glow centered on an element. Use on hero backdrops. */
+  .bg-sun-mesh {
+    background-image:
+      radial-gradient(60% 50% at 15% 0%, hsl(var(--el-sun-amber) / 0.18) 0%, transparent 60%),
+      radial-gradient(50% 40% at 85% 10%, hsl(var(--el-sun-orange) / 0.10) 0%, transparent 65%),
+      radial-gradient(80% 60% at 50% 110%, hsl(var(--el-paper-deep) / 0.85) 0%, transparent 70%);
+  }
+
+  /* Hairline grid texture — the kind that makes a paper-cream surface feel
+     like architectural trace paper instead of a flat blob. */
+  .bg-grid-paper {
+    background-image:
+      linear-gradient(to right,  hsl(var(--el-hairline) / 0.45) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--el-hairline) / 0.45) 1px, transparent 1px);
+    background-size: 48px 48px;
+    background-position: -1px -1px;
+  }
+
+  /* Sun gradient — the brand mark's color signature. */
+  .bg-sun-gradient {
+    background: radial-gradient(
+      circle at 32% 32%,
+      hsl(var(--el-sun-amber)) 0%,
+      hsl(var(--el-sun-orange)) 55%,
+      hsl(var(--el-sun-deep)) 100%
+    );
+  }
+
+  .text-sun-gradient {
+    background: linear-gradient(135deg, hsl(var(--el-sun-amber)) 0%, hsl(var(--el-sun-orange)) 100%);
+    -webkit-background-clip: text;
+            background-clip: text;
+    color: transparent;
+  }
+
+  /* Subtle grain — keeps cream surfaces from feeling synthetic on retina. */
+  .grain {
+    position: relative;
+    isolation: isolate;
+  }
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.06;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+
+  /* Thin sun-gradient hairline used under the app header. */
+  .border-sun-hairline {
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(var(--el-sun-amber)) 35%,
+      hsl(var(--el-sun-orange)) 65%,
+      transparent 100%
+    );
+  }
+}
+
+/* ===========================================================================
+   Schedule visualizer — keep the original circadian-day gradient but
+   re-key it to the Earthlight palette so it lives in the same family.
+   =========================================================================== */
 .lighting-gradient {
-  background: linear-gradient(to right, 
-    #E5A013 0%, 
-    #F9D262 25%, 
-    #E5DEFF 50%, 
-    #9b87f5 75%, 
-    #7E69AB 100%
+  background: linear-gradient(
+    to right,
+    #002253 0%,        /* pre-dawn ink */
+    #5d4d8c 12%,       /* dusk-violet */
+    #ffc107 30%,       /* sun-amber */
+    #fff5d4 50%,       /* midday */
+    #ff8b32 75%,       /* late afternoon orange */
+    #002253 100%       /* night ink */
   );
 }
 
 .light-intensity-indicator {
-  transition: all 0.5s ease;
+  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .time-marker::after {

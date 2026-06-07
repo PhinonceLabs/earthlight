@@ -207,13 +207,14 @@ export function ProjectWorkspaceClient({
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-4 rounded-2xl border bg-white/80 p-6 shadow-sm backdrop-blur md:flex-row md:items-start md:justify-between">
+      <div className="relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-earthlight-hairline bg-card p-6 shadow-sm md:flex-row md:items-start md:justify-between">
+        <span aria-hidden className="absolute inset-x-0 top-0 h-px border-sun-hairline opacity-70" />
         <div>
           <div className="mb-3 flex flex-wrap gap-2">
             <Badge variant="secondary">{project.projectType}</Badge>
             <Badge variant="outline">{project.scenarioCount} scenarios</Badge>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-lumify-neutral-darker">{project.name}</h1>
+          <h1 className="font-display text-3xl font-medium tracking-tight text-earthlight-ink">{project.name}</h1>
           <p className="mt-2 max-w-3xl text-muted-foreground">
             {project.description || "Create and persist schedule scenarios for this authenticated project."}
           </p>
@@ -226,8 +227,9 @@ export function ProjectWorkspaceClient({
       </div>
 
       {scenario && activeSchedule && currentSettings ? (
-        <Card className="overflow-hidden bg-white/80 shadow-sm backdrop-blur">
-          <CardHeader className="bg-gradient-to-r from-lumify-blue-light via-lumify-blue to-lumify-blue-dark text-white">
+        <Card className="relative overflow-hidden border-earthlight-hairline bg-card shadow-sm">
+          <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-sun-gradient" />
+          <CardHeader className="bg-earthlight-ink text-primary-foreground">
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
                 <CardTitle>{scenario.name}</CardTitle>
@@ -236,7 +238,7 @@ export function ProjectWorkspaceClient({
                 </CardDescription>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary" className="bg-white text-lumify-blue-dark">
+                <Badge variant="secondary" className="bg-earthlight-paper text-earthlight-ink">
                   {sourceLabel(scenario.source)}
                 </Badge>
                 {scenario.presetName && <Badge className="bg-white/15 text-white">{scenario.presetName}</Badge>}

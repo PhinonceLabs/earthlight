@@ -199,10 +199,11 @@ function ProjectCard({ project }: { project: ProjectSummaryDTO }) {
   }
 
   return (
-    <Card className="flex h-full flex-col bg-white/80 shadow-sm backdrop-blur">
+    <Card className="group relative flex h-full flex-col overflow-hidden border-earthlight-hairline bg-card shadow-[0_1px_0_hsl(var(--el-hairline))] transition hover:shadow-[0_10px_30px_-18px_hsl(var(--el-ink)/0.25)]">
+      <span aria-hidden className="absolute inset-y-0 left-0 w-1 origin-top scale-y-0 bg-sun-gradient transition-transform duration-500 group-hover:scale-y-100" />
       <CardHeader>
         <div className="mb-3 flex items-start justify-between gap-4">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-lumify-blue-light text-lumify-blue-dark">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-earthlight-paper-deep text-earthlight-ink">
             <FolderKanban className="h-5 w-5" />
           </div>
           <Badge variant="secondary">{project.scenarioCount} scenarios</Badge>
