@@ -3,6 +3,7 @@ import { UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { Button } from "@/components/ui/button";
 import { EarthlightWordmark } from "@/components/brand/EarthlightLogo";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
 /**
  * Authenticated shell.
@@ -33,6 +34,7 @@ export default async function AuthenticatedAppLayout({ children }: { children: R
               <Link href="/projects">Projects</Link>
             </Button>
             <span className="mx-1 h-5 w-px bg-earthlight-hairline" aria-hidden />
+            <ThemeSwitcher />
             <UserButton
               appearance={{
                 elements: {
