@@ -55,7 +55,7 @@ export default async function LandingPage() {
             </Button>
             <Button asChild className="bg-earthlight-ink text-primary-foreground hover:bg-earthlight-ink-soft">
               <a
-                href="https://calendar.app.google/QmgcNZHCumHQqew88"
+                href="https://calendar.app.google/6sS4H2HfwMgXZ8kU9"
                 target="_blank"
                 rel="noopener noreferrer"
               >
