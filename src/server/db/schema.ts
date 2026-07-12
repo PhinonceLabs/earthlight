@@ -6,6 +6,7 @@ import {
 } from "@/domain/constants";
 import {
   index,
+  integer,
   jsonb,
   pgEnum,
   pgTable,
@@ -61,6 +62,20 @@ export const appUsers = pgTable(
     updatedAt,
   },
   (table) => [uniqueIndex("app_users_clerk_user_id_idx").on(table.clerkUserId)],
+);
+
+// These global definitions are intentionally not user-owned. Application code exposes
+// them only through the copy action, keeping the shared source records read-only.
+export const workedExampleTemplates = pgTable(
+  "worked_example_templates",
+  {
+    key: text("key").primaryKey(),
+    version: text("version").notNull(),
+    sortOrder: integer("sort_order").notNull(),
+    definition: jsonb("definition").$type<JsonObject>().notNull(),
+    createdAt,
+  },
+  (table) => [uniqueIndex("worked_example_templates_sort_order_idx").on(table.sortOrder)],
 );
 
 export const projects = pgTable(
@@ -202,6 +217,7 @@ export const reportSnapshotsRelations = relations(reportSnapshots, ({ one }) => 
 
 export type AppUser = typeof appUsers.$inferSelect;
 export type NewAppUser = typeof appUsers.$inferInsert;
+export type WorkedExampleTemplate = typeof workedExampleTemplates.$inferSelect;
 export type Project = typeof projects.$inferSelect;
 export type NewProject = typeof projects.$inferInsert;
 export type Scenario = typeof scenarios.$inferSelect;

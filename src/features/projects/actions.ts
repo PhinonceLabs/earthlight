@@ -1,13 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, eq } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
+import { and, asc, eq } from "drizzle-orm";
+import { ROI_ASSUMPTIONS, ROI_ASSUMPTIONS_VERSION } from "@/domain/roi/assumptions";
+import { calculateRoiRange } from "@/domain/roi/calculator";
+import { roiSnapshotDataSchema } from "@/domain/validation/roi";
+import { createReportSnapshotData, REPORT_VERSION } from "@/features/reports/normalizers";
 import { projectAccessWhere } from "@/server/auth/authorization";
 import { requireAppIdentity } from "@/server/auth/identity";
 import { db } from "@/server/db";
-import { projects } from "@/server/db/schema";
+import { projects, reportSnapshots, roiSnapshots, scenarios, workedExampleTemplates } from "@/server/db/schema";
 import { projectCreateSchema, projectUpdateSchema } from "@/server/validation/project";
 import { validationError, type ActionResult } from "@/features/shared/actions";
+import { workedExampleTemplatesSchema } from "./workedExampleTemplates";
 
 function revalidateProjectPaths(projectId?: string) {
   revalidatePath("/projects");
@@ -44,6 +50,149 @@ export async function createProject(input: unknown): Promise<ActionResult<{ proj
 
   revalidateProjectPaths(project.id);
   return { ok: true, data: { projectId: project.id } };
+}
+
+export async function addWorkedExamples(): Promise<
+  ActionResult<{ projectCount: number; scenarioCount: number; roiSnapshotCount: number; reportCount: number }>
+> {
+  const identity = await requireAppIdentity();
+  const templateRows = await db
+    .select()
+    .from(workedExampleTemplates)
+    .orderBy(asc(workedExampleTemplates.sortOrder));
+  const parsedTemplates = workedExampleTemplatesSchema.safeParse(templateRows);
+
+  if (!parsedTemplates.success) {
+    console.error("Worked-example templates failed validation.", parsedTemplates.error.flatten());
+    return { ok: false, message: "Worked examples are temporarily unavailable." };
+  }
+
+  const now = new Date();
+  const createdAt = now.toISOString();
+  const projectRows: Array<typeof projects.$inferInsert> = [];
+  const scenarioRows: Array<typeof scenarios.$inferInsert> = [];
+  const roiRows: Array<typeof roiSnapshots.$inferInsert> = [];
+  const reportRows: Array<typeof reportSnapshots.$inferInsert> = [];
+
+  for (const template of parsedTemplates.data) {
+    const { project, scenario, roiInputs, reportName } = template.definition;
+    const projectId = randomUUID();
+    const scenarioId = randomUUID();
+    const roiSnapshotId = roiInputs ? randomUUID() : null;
+
+    projectRows.push({
+      id: projectId,
+      ownerId: identity.appUserId,
+      // Worked examples are personal copies even when the user has an active organization.
+      organizationId: null,
+      name: project.name!,
+      description: project.description ?? "",
+      client: project.client ?? "",
+      location: project.location ?? "",
+      projectType: project.projectType!,
+      tags: project.tags ?? [],
+      createdAt: now,
+      updatedAt: now,
+    });
+    scenarioRows.push({
+      id: scenarioId,
+      projectId,
+      name: scenario.name!,
+      description: scenario.description ?? "",
+      source: scenario.source!,
+      presetName: scenario.presetName ?? null,
+      schedule: scenario.schedule! as typeof scenarios.$inferInsert["schedule"],
+      scheduleInputs: scenario.scheduleInputs as typeof scenarios.$inferInsert["scheduleInputs"],
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const computedRoi = roiInputs
+      ? roiSnapshotDataSchema.parse({
+          inputs: roiInputs,
+          assumptionsVersion: ROI_ASSUMPTIONS_VERSION,
+          assumptions: ROI_ASSUMPTIONS,
+          results: calculateRoiRange(roiInputs),
+        })
+      : null;
+
+    if (computedRoi && roiSnapshotId) {
+      roiRows.push({
+        id: roiSnapshotId,
+        projectId,
+        scenarioId,
+        inputs: computedRoi.inputs! as typeof roiSnapshots.$inferInsert["inputs"],
+        assumptionsVersion: computedRoi.assumptionsVersion!,
+        assumptions: computedRoi.assumptions! as typeof roiSnapshots.$inferInsert["assumptions"],
+        results: computedRoi.results! as typeof roiSnapshots.$inferInsert["results"],
+        createdAt: now,
+      });
+    }
+
+    const reportData = createReportSnapshotData({
+      project: {
+        id: projectId,
+        name: project.name!,
+        description: project.description ?? "",
+        client: project.client ?? "",
+        location: project.location ?? "",
+        projectType: project.projectType!,
+        tags: project.tags ?? [],
+        createdAt,
+        updatedAt: createdAt,
+        scenarioCount: 1,
+      },
+      scenario: {
+        id: scenarioId,
+        projectId,
+        name: scenario.name!,
+        description: scenario.description ?? "",
+        source: scenario.source!,
+        presetName: scenario.presetName ?? null,
+        schedule: scenario.schedule!,
+        scheduleInputs: scenario.scheduleInputs!,
+        createdAt,
+        updatedAt: createdAt,
+      },
+      roiSnapshot:
+        computedRoi && roiSnapshotId
+          ? { id: roiSnapshotId, projectId, scenarioId, createdAt, ...computedRoi }
+          : null,
+      generatedAt: now,
+    });
+
+    reportRows.push({
+      id: randomUUID(),
+      projectId,
+      scenarioId,
+      roiSnapshotId,
+      name: reportName,
+      reportVersion: REPORT_VERSION,
+      reportData: reportData as typeof reportSnapshots.$inferInsert["reportData"],
+      generatedAt: now,
+      createdAt: now,
+    });
+  }
+
+  // neon-http does not support interactive transactions. Drizzle batch submits these
+  // four statements as one Neon transaction, preventing partially copied example sets.
+  await db.batch([
+    db.insert(projects).values(projectRows),
+    db.insert(scenarios).values(scenarioRows),
+    db.insert(roiSnapshots).values(roiRows),
+    db.insert(reportSnapshots).values(reportRows),
+  ]);
+
+  revalidateProjectPaths();
+  return {
+    ok: true,
+    data: {
+      projectCount: projectRows.length,
+      scenarioCount: scenarioRows.length,
+      roiSnapshotCount: roiRows.length,
+      reportCount: reportRows.length,
+    },
+  };
 }
 
 export async function updateProject(

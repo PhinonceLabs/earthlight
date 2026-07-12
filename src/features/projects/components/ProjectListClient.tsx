@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState, useTransition } from "react";
-import { FolderKanban, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { BookOpenCheck, FolderKanban, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { describeActionError } from "@/features/shared/actionErrors";
 import { projectTypeValues, type ProjectTypeValue } from "@/domain/constants";
-import { createProject, deleteProject, updateProject } from "../actions";
+import { addWorkedExamples, createProject, deleteProject, updateProject } from "../actions";
 import type { ProjectSummaryDTO } from "../queries";
 
 type ProjectFormState = {
@@ -259,18 +259,48 @@ export function ProjectListClient({ projects }: { projects: ProjectSummaryDTO[] 
   const router = useRouter();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+  const [pendingAction, setPendingAction] = useState<"create" | "examples" | null>(null);
   const [form, setForm] = useState<ProjectFormState>(emptyForm);
 
   const handleCreate = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setPendingAction("create");
     startTransition(async () => {
-      const result = await createProject(formToInput(form));
-      if (result.ok === false) {
-        toast({ title: "Project creation failed", description: describeActionError(result), variant: "destructive" });
-        return;
+      try {
+        const result = await createProject(formToInput(form));
+        if (result.ok === false) {
+          toast({ title: "Project creation failed", description: describeActionError(result), variant: "destructive" });
+          return;
+        }
+        toast({ title: "Project created", description: "Opening the authenticated project workspace." });
+        router.push(`/projects/${result.data.projectId}`);
+      } finally {
+        setPendingAction(null);
       }
-      toast({ title: "Project created", description: "Opening the authenticated project workspace." });
-      router.push(`/projects/${result.data.projectId}`);
+    });
+  };
+
+  const handleAddWorkedExamples = () => {
+    setPendingAction("examples");
+    startTransition(async () => {
+      try {
+        const result = await addWorkedExamples();
+        if (result.ok === false) {
+          toast({
+            title: "Worked examples could not be added",
+            description: describeActionError(result),
+            variant: "destructive",
+          });
+          return;
+        }
+        toast({
+          title: "Worked examples added",
+          description: `${result.data.projectCount} editable projects, ${result.data.scenarioCount} scenarios, and ${result.data.reportCount} reports were copied to your account.`,
+        });
+        router.refresh();
+      } finally {
+        setPendingAction(null);
+      }
     });
   };
 
@@ -278,21 +308,34 @@ export function ProjectListClient({ projects }: { projects: ProjectSummaryDTO[] 
     <div className="space-y-8">
       <Card className="bg-card/80 shadow-sm backdrop-blur">
         <form onSubmit={handleCreate}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5" />
-              New project
-            </CardTitle>
-            <CardDescription>
-              Projects are persisted under your Clerk identity. The client never sends owner IDs.
-            </CardDescription>
+          <CardHeader className="gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-1.5">
+              <CardTitle className="flex items-center gap-2">
+                <Plus className="h-5 w-5" />
+                New project
+              </CardTitle>
+              <CardDescription>
+                Projects are persisted under your Clerk identity. The client never sends owner IDs.
+              </CardDescription>
+            </div>
+            <Button type="button" variant="outline" onClick={handleAddWorkedExamples} disabled={isPending}>
+              {pendingAction === "examples" ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <BookOpenCheck className="mr-2 h-4 w-4" />
+              )}
+              Add Worked Examples
+            </Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
+            <CardDescription>
+              Adds four independent, editable copies with scenarios and reports. Harbor Heights intentionally has no ROI or financial analysis.
+            </CardDescription>
             <ProjectFields form={form} setForm={setForm} />
           </CardContent>
           <CardFooter className="justify-end">
             <Button type="submit" disabled={isPending}>
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {pendingAction === "create" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create project
             </Button>
           </CardFooter>
