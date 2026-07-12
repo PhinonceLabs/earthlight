@@ -57,7 +57,12 @@ export async function addWorkedExamples(): Promise<
 > {
   const identity = await requireAppIdentity();
   const templateRows = await db
-    .select()
+    .select({
+      key: workedExampleTemplates.key,
+      version: workedExampleTemplates.version,
+      sortOrder: workedExampleTemplates.sortOrder,
+      definition: workedExampleTemplates.definition,
+    })
     .from(workedExampleTemplates)
     .orderBy(asc(workedExampleTemplates.sortOrder));
   const parsedTemplates = workedExampleTemplatesSchema.safeParse(templateRows);
