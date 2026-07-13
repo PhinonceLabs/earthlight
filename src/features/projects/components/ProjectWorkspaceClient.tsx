@@ -22,7 +22,6 @@ import { deleteScenario, quickSaveScenario } from "@/features/scenarios/actions"
 import {
   formatOptionalDecimal,
   formatOptionalNumber,
-  hasDerivedLegacyDisplay,
   toLegacyDisplaySchedule,
 } from "@/features/scenarios/displaySchedule";
 import { ROICalculatorClient } from "@/features/roi/components/ROICalculatorClient";
@@ -90,9 +89,6 @@ function ScheduleTable({
     <Card>
       <CardHeader>
         <CardTitle>Schedule points</CardTitle>
-        <CardDescription>
-          Persisted JSONB may include PRD exposure metrics. Legacy display values are adapted only for visualization and never written back.
-        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto rounded-lg border">
@@ -111,22 +107,15 @@ function ScheduleTable({
             <tbody>
               {persistedSchedule.schedule.map((point, index) => {
                 const displayPoint = displaySchedule.schedule[index];
-                const derivedDisplay = hasDerivedLegacyDisplay(point);
 
                 return (
                   <tr key={`${point.time}-${index}`} className="border-t align-top">
                     <td className="px-4 py-3">{formatTime(point.time)}</td>
                     <td className="px-4 py-3">
                       {formatOptionalNumber(displayPoint?.intensity, "%")}
-                      {derivedDisplay && point.intensity === undefined && (
-                        <span className="ml-1 text-xs text-muted-foreground">derived</span>
-                      )}
                     </td>
                     <td className="px-4 py-3">
                       {formatOptionalNumber(displayPoint?.temperature, "K")}
-                      {derivedDisplay && point.temperature === undefined && (
-                        <span className="ml-1 text-xs text-muted-foreground">fallback</span>
-                      )}
                     </td>
                     <td className="px-4 py-3">{formatOptionalNumber(point.photopicVerticalLux, " lx")}</td>
                     <td className="px-4 py-3">{formatOptionalDecimal(point.melanopicDER)}</td>

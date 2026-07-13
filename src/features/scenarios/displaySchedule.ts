@@ -65,7 +65,3 @@ export function formatOptionalNumber(value: number | undefined, suffix = ""): st
 export function formatOptionalDecimal(value: number | undefined): string {
   return value === undefined ? "—" : value.toFixed(2);
 }
-
-export function hasDerivedLegacyDisplay(point: LightingExposurePointInput): boolean {
-  return point.intensity === undefined || point.temperature === undefined;
-}
