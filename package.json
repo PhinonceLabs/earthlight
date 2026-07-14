@@ -10,8 +10,9 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
+    "validate:worked-examples": "node scripts/validate-worked-example-metrics.mjs",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "npm run validate:worked-examples && drizzle-kit migrate",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {

@@ -64,6 +64,20 @@ export const workedExampleTemplateSchema = z
   .strict()
   .superRefine((template, ctx) => {
     const isHarborHeights = template.key === "harbor-heights";
+    const metrics = template.definition.scenario.schedule.workedExampleLightingMetrics;
+    if (!metrics) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["definition", "scenario", "schedule", "workedExampleLightingMetrics"],
+        message: "Canonical worked examples require audited lighting metric metadata.",
+      });
+    } else if (metrics.templateVersion !== template.version) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["definition", "scenario", "schedule", "workedExampleLightingMetrics", "templateVersion"],
+        message: "Worked-example lighting metric metadata must match its template version.",
+      });
+    }
     if (isHarborHeights && template.definition.roiInputs) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

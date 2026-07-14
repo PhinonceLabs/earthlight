@@ -4,6 +4,10 @@ import {
   projectTypeValues,
   scenarioSourceValues,
 } from "@/domain/constants";
+import type {
+  LightingExposurePointCalculation,
+  WorkedExampleLightingMetrics,
+} from "@/domain/validation/lighting";
 import {
   index,
   integer,
@@ -33,6 +37,9 @@ type LightingExposurePointSnapshot = {
   cctK?: number;
   source: (typeof exposurePointSourceValues)[number];
   notes?: string;
+  assumptionIds?: string[];
+  citationIds?: string[];
+  calculation?: LightingExposurePointCalculation;
 };
 
 type LightingScheduleSnapshot = {
@@ -40,6 +47,7 @@ type LightingScheduleSnapshot = {
   description: string;
   schedule: LightingExposurePointSnapshot[];
   citations: string[];
+  workedExampleLightingMetrics?: WorkedExampleLightingMetrics;
 };
 
 type JsonObject = Record<string, unknown>;

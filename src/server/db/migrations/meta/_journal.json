@@ -22,6 +22,13 @@
       "when": 1783960000000,
       "tag": "0002_fill_demo_project_clients",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1784010680040,
+      "tag": "0003_add_worked_example_lighting_metrics",
+      "breakpoints": true
     }
   ]
 }
