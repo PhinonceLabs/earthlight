@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import type { ReportSnapshotDTO } from "@/features/reports/queries";
 import { reportExportFilename, serializeReportSnapshotToJson } from "@/features/export/serializers";
 import { downloadTextFile } from "@/lib/browser-download";
+import { formatDateOnly, formatDateTime } from "@/lib/date-format";
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -33,7 +34,7 @@ export function ReportViewer({ report }: { report: ReportSnapshotDTO }) {
           <div>
             <CardTitle>{report.name}</CardTitle>
             <CardDescription>
-              Immutable snapshot generated {new Date(report.generatedAt).toLocaleString()}
+              Immutable snapshot generated {formatDateTime(report.generatedAt)}
             </CardDescription>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -58,7 +59,7 @@ export function ReportViewer({ report }: { report: ReportSnapshotDTO }) {
                 Professional Lighting Analysis & Recommendations
               </p>
               <p className="mt-2 text-sm text-muted-foreground">
-                Generated {new Date(reportData.generatedAt).toLocaleDateString()}
+                Generated {formatDateOnly(reportData.generatedAt)}
               </p>
             </header>
 

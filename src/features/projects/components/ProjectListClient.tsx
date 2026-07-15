@@ -3,7 +3,18 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState, useTransition } from "react";
-import { BookOpenCheck, FolderKanban, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { BookOpenCheck, FolderKanban, Loader2, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +25,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { describeActionError } from "@/features/shared/actionErrors";
 import { projectTypeValues, type ProjectTypeValue } from "@/domain/constants";
-import { addWorkedExamples, createProject, deleteProject, updateProject } from "../actions";
+import { formatDateOnly } from "@/lib/date-format";
+import { addWorkedExamples, createProject, deleteProject, resetWorkedExamples, updateProject } from "../actions";
 import type { ProjectSummaryDTO } from "../queries";
 
 type ProjectFormState = {
@@ -141,7 +153,7 @@ function ProjectCard({ project }: { project: ProjectSummaryDTO }) {
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState<ProjectFormState>(() => projectToForm(project));
 
-  const updatedAt = useMemo(() => new Date(project.updatedAt).toLocaleDateString(), [project.updatedAt]);
+  const updatedAt = useMemo(() => formatDateOnly(project.updatedAt), [project.updatedAt]);
 
   const handleUpdate = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -206,7 +218,14 @@ function ProjectCard({ project }: { project: ProjectSummaryDTO }) {
           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-earthlight-paper-deep text-earthlight-ink">
             <FolderKanban className="h-5 w-5" />
           </div>
-          <Badge variant="secondary">{project.scenarioCount} scenarios</Badge>
+          <div className="flex flex-col items-end gap-2">
+            <Badge variant="secondary">{project.scenarioCount} scenarios</Badge>
+            {project.workedExampleStatus !== "unmanaged" && (
+              <Badge variant={project.workedExampleStatus === "outdated" ? "destructive" : "outline"}>
+                Managed example · {project.workedExampleStatus}
+              </Badge>
+            )}
+          </div>
         </div>
         <CardTitle>{project.name}</CardTitle>
         <CardDescription>{project.description || "No description yet."}</CardDescription>
@@ -259,8 +278,10 @@ export function ProjectListClient({ projects }: { projects: ProjectSummaryDTO[] 
   const router = useRouter();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
-  const [pendingAction, setPendingAction] = useState<"create" | "examples" | null>(null);
+  const [pendingAction, setPendingAction] = useState<"create" | "examples" | "reset" | null>(null);
   const [form, setForm] = useState<ProjectFormState>(emptyForm);
+  const hasManagedWorkedExamples = projects.some((project) => project.workedExampleStatus !== "unmanaged");
+  const hasOutdatedWorkedExamples = projects.some((project) => project.workedExampleStatus === "outdated");
 
   const handleCreate = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -298,6 +319,42 @@ export function ProjectListClient({ projects }: { projects: ProjectSummaryDTO[] 
           description: `${result.data.projectCount} editable projects, ${result.data.scenarioCount} scenarios, and ${result.data.reportCount} reports were copied to your account.`,
         });
         router.refresh();
+      } catch {
+        toast({
+          title: "Worked examples could not be added",
+          description: "Refresh the page and try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setPendingAction(null);
+      }
+    });
+  };
+
+  const handleResetWorkedExamples = () => {
+    setPendingAction("reset");
+    startTransition(async () => {
+      try {
+        const result = await resetWorkedExamples();
+        if (result.ok === false) {
+          toast({
+            title: "Worked examples could not be reset",
+            description: describeActionError(result),
+            variant: "destructive",
+          });
+          return;
+        }
+        toast({
+          title: hasOutdatedWorkedExamples ? "Worked examples upgraded" : "Worked examples reset",
+          description: `${result.data.projectCount} current managed examples were recreated with fresh scenarios and reports.`,
+        });
+        router.refresh();
+      } catch {
+        toast({
+          title: "Worked examples could not be reset",
+          description: "Refresh the page and try again.",
+          variant: "destructive",
+        });
       } finally {
         setPendingAction(null);
       }
@@ -318,18 +375,53 @@ export function ProjectListClient({ projects }: { projects: ProjectSummaryDTO[] 
                 Projects are persisted under your Clerk identity. The client never sends owner IDs.
               </CardDescription>
             </div>
-            <Button type="button" variant="outline" onClick={handleAddWorkedExamples} disabled={isPending}>
-              {pendingAction === "examples" ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <BookOpenCheck className="mr-2 h-4 w-4" />
-              )}
-              Add Worked Examples
-            </Button>
+            {hasManagedWorkedExamples ? (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button type="button" variant="outline" disabled={isPending}>
+                    {pendingAction === "reset" ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <RotateCcw className="mr-2 h-4 w-4" />
+                    )}
+                    {hasOutdatedWorkedExamples ? "Upgrade Worked Examples" : "Reset Worked Examples"}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      {hasOutdatedWorkedExamples ? "Upgrade managed worked examples?" : "Reset managed worked examples?"}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This permanently deletes only your managed personal worked-example projects, including your edits, then recreates all four from the current templates. Ordinary and organization projects are never included. Older copies created before version tracking are untagged and remain untouched; delete those once manually from their project cards if you no longer need them.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleResetWorkedExamples}
+                      disabled={isPending}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {hasOutdatedWorkedExamples ? "Upgrade and replace" : "Reset and replace"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : (
+              <Button type="button" variant="outline" onClick={handleAddWorkedExamples} disabled={isPending}>
+                {pendingAction === "examples" ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <BookOpenCheck className="mr-2 h-4 w-4" />
+                )}
+                Add Worked Examples
+              </Button>
+            )}
           </CardHeader>
           <CardContent className="space-y-6">
             <CardDescription>
-              Adds four independent, editable copies with scenarios and reports. Harbor Heights intentionally has no ROI or financial analysis.
+              Adds four independent, editable managed copies with scenarios and reports. Harbor Heights intentionally has no ROI or financial analysis. Legacy worked-example copies created before version tracking stay untagged and require one-time manual deletion if you no longer want them.
             </CardDescription>
             <ProjectFields form={form} setForm={setForm} />
           </CardContent>

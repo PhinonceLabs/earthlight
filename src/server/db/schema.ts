@@ -9,6 +9,7 @@ import type {
   WorkedExampleLightingMetrics,
 } from "@/domain/validation/lighting";
 import {
+  check,
   index,
   integer,
   jsonb,
@@ -94,6 +95,10 @@ export const projects = pgTable(
       .notNull()
       .references(() => appUsers.id, { onDelete: "cascade" }),
     organizationId: text("organization_id"),
+    // Only copies created from the managed catalog receive provenance. Nulls intentionally
+    // preserve ordinary projects and worked-example copies created before version tracking.
+    workedExampleTemplateKey: text("worked_example_template_key"),
+    workedExampleTemplateVersion: text("worked_example_template_version"),
     name: text("name").notNull(),
     description: text("description").notNull().default(""),
     client: text("client").notNull().default(""),
@@ -107,6 +112,13 @@ export const projects = pgTable(
     index("projects_owner_updated_at_idx").on(table.ownerId, table.updatedAt.desc()),
     index("projects_org_updated_at_idx").on(table.organizationId, table.updatedAt.desc()),
     index("projects_project_type_idx").on(table.projectType),
+    check(
+      "projects_worked_example_template_pair_check",
+      sql`(${table.workedExampleTemplateKey} IS NULL) = (${table.workedExampleTemplateVersion} IS NULL)`,
+    ),
+    uniqueIndex("projects_personal_worked_example_template_idx")
+      .on(table.ownerId, table.workedExampleTemplateKey)
+      .where(sql`${table.organizationId} IS NULL AND ${table.workedExampleTemplateKey} IS NOT NULL`),
   ],
 );
 

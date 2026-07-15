@@ -1,10 +1,13 @@
 import "server-only";
 
 import { count, desc, eq } from "drizzle-orm";
+import { WORKED_EXAMPLE_TEMPLATE_VERSION } from "@/features/projects/workedExampleTemplates";
 import { projectAccessWhere, projectIdAccessWhere } from "@/server/auth/authorization";
 import { requireAppIdentity } from "@/server/auth/identity";
 import { db } from "@/server/db";
 import { projects, scenarios, type ProjectType } from "@/server/db/schema";
+
+export type WorkedExampleProjectStatus = "unmanaged" | "current" | "outdated";
 
 export type ProjectSummaryDTO = {
   id: string;
@@ -14,6 +17,9 @@ export type ProjectSummaryDTO = {
   location: string;
   projectType: ProjectType;
   tags: string[];
+  workedExampleTemplateKey: string | null;
+  workedExampleTemplateVersion: string | null;
+  workedExampleStatus: WorkedExampleProjectStatus;
   createdAt: string;
   updatedAt: string;
   scenarioCount: number;
@@ -32,6 +38,14 @@ function toProjectDTO(
     location: row.location,
     projectType: row.projectType,
     tags: row.tags,
+    workedExampleTemplateKey: row.workedExampleTemplateKey,
+    workedExampleTemplateVersion: row.workedExampleTemplateVersion,
+    workedExampleStatus:
+      row.workedExampleTemplateKey === null
+        ? "unmanaged"
+        : row.workedExampleTemplateVersion === WORKED_EXAMPLE_TEMPLATE_VERSION
+          ? "current"
+          : "outdated",
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     scenarioCount: Number(row.scenarioCount ?? 0),
@@ -46,6 +60,8 @@ export async function listProjectsForCurrentIdentity(): Promise<ProjectSummaryDT
       id: projects.id,
       ownerId: projects.ownerId,
       organizationId: projects.organizationId,
+      workedExampleTemplateKey: projects.workedExampleTemplateKey,
+      workedExampleTemplateVersion: projects.workedExampleTemplateVersion,
       name: projects.name,
       description: projects.description,
       client: projects.client,
@@ -75,6 +91,8 @@ export async function getProjectForCurrentIdentity(
       id: projects.id,
       ownerId: projects.ownerId,
       organizationId: projects.organizationId,
+      workedExampleTemplateKey: projects.workedExampleTemplateKey,
+      workedExampleTemplateVersion: projects.workedExampleTemplateVersion,
       name: projects.name,
       description: projects.description,
       client: projects.client,

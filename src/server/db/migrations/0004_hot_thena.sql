@@ -1,0 +1,4 @@
+ALTER TABLE "projects" ADD COLUMN "worked_example_template_key" text;--> statement-breakpoint
+ALTER TABLE "projects" ADD COLUMN "worked_example_template_version" text;--> statement-breakpoint
+CREATE UNIQUE INDEX "projects_personal_worked_example_template_idx" ON "projects" USING btree ("owner_id","worked_example_template_key") WHERE "projects"."organization_id" IS NULL AND "projects"."worked_example_template_key" IS NOT NULL;--> statement-breakpoint
+ALTER TABLE "projects" ADD CONSTRAINT "projects_worked_example_template_pair_check" CHECK (("projects"."worked_example_template_key" IS NULL) = ("projects"."worked_example_template_version" IS NULL));

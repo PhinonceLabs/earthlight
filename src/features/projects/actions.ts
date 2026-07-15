@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
 import { ROI_ASSUMPTIONS, ROI_ASSUMPTIONS_VERSION } from "@/domain/roi/assumptions";
 import { calculateRoiRange } from "@/domain/roi/calculator";
 import { roiSnapshotDataSchema } from "@/domain/validation/roi";
@@ -52,10 +52,21 @@ export async function createProject(input: unknown): Promise<ActionResult<{ proj
   return { ok: true, data: { projectId: project.id } };
 }
 
-export async function addWorkedExamples(): Promise<
-  ActionResult<{ projectCount: number; scenarioCount: number; roiSnapshotCount: number; reportCount: number }>
-> {
-  const identity = await requireAppIdentity();
+type WorkedExampleCopyCounts = {
+  projectCount: number;
+  scenarioCount: number;
+  roiSnapshotCount: number;
+  reportCount: number;
+};
+
+type PreparedWorkedExampleRows = {
+  projectRows: Array<typeof projects.$inferInsert>;
+  scenarioRows: Array<typeof scenarios.$inferInsert>;
+  roiRows: Array<typeof roiSnapshots.$inferInsert>;
+  reportRows: Array<typeof reportSnapshots.$inferInsert>;
+};
+
+async function prepareWorkedExampleRows(ownerId: string): Promise<PreparedWorkedExampleRows | null> {
   const templateRows = await db
     .select({
       key: workedExampleTemplates.key,
@@ -69,7 +80,7 @@ export async function addWorkedExamples(): Promise<
 
   if (!parsedTemplates.success) {
     console.error("Worked-example templates failed validation.", parsedTemplates.error.flatten());
-    return { ok: false, message: "Worked examples are temporarily unavailable." };
+    return null;
   }
 
   const now = new Date();
@@ -87,9 +98,11 @@ export async function addWorkedExamples(): Promise<
 
     projectRows.push({
       id: projectId,
-      ownerId: identity.appUserId,
+      ownerId,
       // Worked examples are personal copies even when the user has an active organization.
       organizationId: null,
+      workedExampleTemplateKey: template.key,
+      workedExampleTemplateVersion: template.version,
       name: project.name!,
       description: project.description ?? "",
       client: project.client ?? "",
@@ -143,6 +156,9 @@ export async function addWorkedExamples(): Promise<
         location: project.location ?? "",
         projectType: project.projectType!,
         tags: project.tags ?? [],
+        workedExampleTemplateKey: template.key,
+        workedExampleTemplateVersion: template.version,
+        workedExampleStatus: "current",
         createdAt,
         updatedAt: createdAt,
         scenarioCount: 1,
@@ -179,25 +195,82 @@ export async function addWorkedExamples(): Promise<
     });
   }
 
-  // neon-http does not support interactive transactions. Drizzle batch submits these
-  // four statements as one Neon transaction, preventing partially copied example sets.
-  await db.batch([
-    db.insert(projects).values(projectRows),
-    db.insert(scenarios).values(scenarioRows),
-    db.insert(roiSnapshots).values(roiRows),
-    db.insert(reportSnapshots).values(reportRows),
-  ]);
+  return { projectRows, scenarioRows, roiRows, reportRows };
+}
 
-  revalidateProjectPaths();
+function workedExampleCopyCounts(rows: PreparedWorkedExampleRows): WorkedExampleCopyCounts {
   return {
-    ok: true,
-    data: {
-      projectCount: projectRows.length,
-      scenarioCount: scenarioRows.length,
-      roiSnapshotCount: roiRows.length,
-      reportCount: reportRows.length,
-    },
+    projectCount: rows.projectRows.length,
+    scenarioCount: rows.scenarioRows.length,
+    roiSnapshotCount: rows.roiRows.length,
+    reportCount: rows.reportRows.length,
   };
+}
+
+export async function addWorkedExamples(): Promise<ActionResult<WorkedExampleCopyCounts>> {
+  try {
+    const identity = await requireAppIdentity();
+    const rows = await prepareWorkedExampleRows(identity.appUserId);
+    if (!rows) {
+      return { ok: false, message: "Worked examples are temporarily unavailable." };
+    }
+
+    // neon-http does not support interactive transactions. Drizzle batch submits these
+    // four statements as one Neon transaction, preventing partially copied example sets.
+    await db.batch([
+      db.insert(projects).values(rows.projectRows),
+      db.insert(scenarios).values(rows.scenarioRows),
+      db.insert(roiSnapshots).values(rows.roiRows),
+      db.insert(reportSnapshots).values(rows.reportRows),
+    ]);
+
+    revalidateProjectPaths();
+    return { ok: true, data: workedExampleCopyCounts(rows) };
+  } catch (error) {
+    console.error("Failed to add worked examples.", error);
+    return {
+      ok: false,
+      message: "Worked examples could not be added. Refresh the page and try again.",
+    };
+  }
+}
+
+export async function resetWorkedExamples(): Promise<ActionResult<WorkedExampleCopyCounts>> {
+  try {
+    const identity = await requireAppIdentity();
+    const rows = await prepareWorkedExampleRows(identity.appUserId);
+    if (!rows) {
+      return { ok: false, message: "Worked examples are temporarily unavailable." };
+    }
+
+    // Project is the aggregate root: deleting a managed project cascades through its
+    // scenario, ROI, and report rows. Untagged legacy copies and organization projects
+    // deliberately fall outside this predicate and must never be inferred from names.
+    await db.batch([
+      db
+        .delete(projects)
+        .where(
+          and(
+            eq(projects.ownerId, identity.appUserId),
+            isNull(projects.organizationId),
+            isNotNull(projects.workedExampleTemplateKey),
+          ),
+        ),
+      db.insert(projects).values(rows.projectRows),
+      db.insert(scenarios).values(rows.scenarioRows),
+      db.insert(roiSnapshots).values(rows.roiRows),
+      db.insert(reportSnapshots).values(rows.reportRows),
+    ]);
+
+    revalidateProjectPaths();
+    return { ok: true, data: workedExampleCopyCounts(rows) };
+  } catch (error) {
+    console.error("Failed to reset worked examples.", error);
+    return {
+      ok: false,
+      message: "Worked examples could not be reset. Refresh the page and try again.",
+    };
+  }
 }
 
 export async function updateProject(

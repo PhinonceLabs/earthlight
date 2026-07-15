@@ -26,6 +26,7 @@ import {
 } from "@/features/scenarios/displaySchedule";
 import { ROICalculatorClient } from "@/features/roi/components/ROICalculatorClient";
 import { ReportBuilderClient } from "@/features/reports/components/ReportBuilderClient";
+import { formatDateTime } from "@/lib/date-format";
 import type { RoiSnapshotDTO } from "@/features/roi/queries";
 import type { ReportSnapshotSummaryDTO } from "@/features/reports/queries";
 import type { ProjectDetailDTO } from "../queries";
@@ -252,7 +253,7 @@ export function ProjectWorkspaceClient({
                 <Clock className="h-4 w-4" />
                 Snapshot updated
               </div>
-              <div className="mt-1 text-lg font-semibold">{new Date(scenario.updatedAt).toLocaleString()}</div>
+              <div className="mt-1 text-lg font-semibold">{formatDateTime(scenario.updatedAt)}</div>
             </div>
           </CardContent>
         </Card>

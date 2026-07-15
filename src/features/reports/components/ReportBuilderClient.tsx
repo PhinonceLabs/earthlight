@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { describeActionError } from "@/features/shared/actionErrors";
+import { formatDateTime } from "@/lib/date-format";
 import type { RoiSnapshotDTO } from "@/features/roi/queries";
 import type { ReportSnapshotSummaryDTO } from "@/features/reports/queries";
 import { createReportSnapshot } from "@/features/reports/actions";
@@ -78,7 +79,7 @@ export function ReportBuilderClient({
 
         <div className="rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground">
           {latestRoiSnapshot
-            ? `Includes ROI snapshot from ${new Date(latestRoiSnapshot.createdAt).toLocaleString()}.`
+            ? `Includes ROI snapshot from ${formatDateTime(latestRoiSnapshot.createdAt)}.`
             : "No ROI snapshot saved yet; report will omit financial analysis."}
         </div>
 
@@ -91,7 +92,7 @@ export function ReportBuilderClient({
                   <div>
                     <div className="font-medium">{report.name}</div>
                     <div className="text-xs text-muted-foreground">
-                      Generated {new Date(report.generatedAt).toLocaleString()}
+                      Generated {formatDateTime(report.generatedAt)}
                     </div>
                   </div>
                   <Button asChild variant="outline" size="sm">

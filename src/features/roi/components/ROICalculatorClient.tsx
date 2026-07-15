@@ -13,6 +13,7 @@ import { ROI_ASSUMPTIONS_VERSION } from "@/domain/roi/assumptions";
 import { calculateRoiRange } from "@/domain/roi/calculator";
 import { calculateAndSaveRoiSnapshot } from "@/features/roi/actions";
 import { describeActionError } from "@/features/shared/actionErrors";
+import { formatDateTime } from "@/lib/date-format";
 import type { RoiSnapshotDTO } from "@/features/roi/queries";
 import type { RoiInputs } from "@/domain/validation/roi";
 
@@ -193,7 +194,7 @@ export function ROICalculatorClient({
             <div className="divide-y rounded-lg border">
               {savedSnapshots.map((snapshot) => (
                 <div key={snapshot.id} className="grid gap-2 p-3 text-sm md:grid-cols-4 md:items-center">
-                  <div className="font-medium">{new Date(snapshot.createdAt).toLocaleString()}</div>
+                  <div className="font-medium">{formatDateTime(snapshot.createdAt)}</div>
                   <div>{formatCurrency(snapshot.results.base.totalAnnualSavings)} base savings</div>
                   <div>{snapshot.results.base.roiPercentage}% ROI</div>
                   <div className="text-muted-foreground">{snapshot.assumptionsVersion}</div>
